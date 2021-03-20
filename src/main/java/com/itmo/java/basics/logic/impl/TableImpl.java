@@ -19,6 +19,8 @@ public class TableImpl implements Table {
 
     static Table create(String tableName, Path pathToDatabaseRoot, TableIndex tableIndex) throws DatabaseException {
         Path pathToTable = Paths.get(pathToDatabaseRoot.toString(), tableName);
+        //у меня тут уже паранойя
+        if (Files.exists(pathToTable)) throw new DatabaseException("Can not create a directory");
         try {
             Files.createDirectory(pathToTable);
         } catch (IOException e) {

@@ -21,6 +21,8 @@ public class DatabaseImpl implements Database {
     public static Database create(String dbName, Path databaseRoot) throws DatabaseException {
         if (dbName == null || databaseRoot == null) throw new DatabaseException("Null args");
         databaseRoot = Paths.get(databaseRoot.toString(), dbName);
+        //у меня тут уже паранойя
+        if (Files.exists(databaseRoot)) throw new DatabaseException("Can not create a directory");
         try {
             Files.createDirectory(databaseRoot);
         } catch (IOException e) {
