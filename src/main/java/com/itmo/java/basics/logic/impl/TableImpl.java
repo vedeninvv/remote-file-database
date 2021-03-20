@@ -65,8 +65,10 @@ public class TableImpl implements Table {
     @Override
     public void delete(String objectKey) throws DatabaseException {
         var segment = tableIndex.searchForKey(objectKey);
+        if (segment.isEmpty()) throw new DatabaseException("Segment not found");
+        if (segment.get().isReadOnly()) throw new DatabaseException("Segment is readOnly. Can not delete");
         try {
-            if (segment.isPresent()) segment.get().delete(objectKey);
+            segment.get().delete(objectKey);
         } catch (IOException e) {
             throw new DatabaseException("Can not read segment", e);
         }

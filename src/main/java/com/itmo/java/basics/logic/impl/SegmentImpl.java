@@ -16,7 +16,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 public class SegmentImpl implements Segment {
-    private final static int MAX_SIZE = 1000000;
+    private final static int MAX_SIZE = 100000;
     private SegmentIndex segmentIndex = new SegmentIndex();
     private Path pathToSegment;
     private String segmentName;
@@ -50,7 +50,11 @@ public class SegmentImpl implements Segment {
     public boolean write(String objectKey, byte[] objectValue) throws IOException {
         if (isReadOnly()) return false;
         DatabaseOutputStream outputStream = new DatabaseOutputStream(new FileOutputStream(pathToSegment.toString(), true));
-        int writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), objectValue.length, objectValue));
+        int writtenBytes;
+        if (objectValue == null)
+            writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), -1, new byte[]{}));
+        else
+            writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), objectValue.length, objectValue));
         segmentIndex.onIndexedEntityUpdated(objectKey, new SegmentOffsetInfoImpl(curOffset));
         curOffset += writtenBytes;
         outputStream.close();
