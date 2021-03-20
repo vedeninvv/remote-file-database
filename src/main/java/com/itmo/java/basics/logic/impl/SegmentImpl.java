@@ -85,7 +85,7 @@ public class SegmentImpl implements Segment {
         if (segmentIndex.searchForKey(objectKey).isEmpty()) return false;
         DatabaseOutputStream outputStream = new DatabaseOutputStream(new FileOutputStream(pathToSegment.toString(), true));
         int writtenBytes = outputStream.write(new RemoveDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8)));
-        segmentIndex.onIndexedEntityUpdated(objectKey, new SegmentOffsetInfoImpl(curOffset));
+        segmentIndex.onIndexedEntityUpdated(objectKey, null);
         curOffset += writtenBytes;
         outputStream.close();
         return true;

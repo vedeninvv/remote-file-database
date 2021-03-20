@@ -39,6 +39,7 @@ public class TableImpl implements Table {
 
     @Override
     public void write(String objectKey, byte[] objectValue) throws DatabaseException {
+        if (objectKey == null) throw new DatabaseException("Null key");
         if (curSegment == null || curSegment.isReadOnly())
             curSegment = SegmentImpl.create(SegmentImpl.createSegmentName(tableName), pathToTable);
         try{
@@ -52,6 +53,7 @@ public class TableImpl implements Table {
 
     @Override
     public Optional<byte[]> read(String objectKey) throws DatabaseException {
+        if (objectKey == null) throw new DatabaseException("Null key");
         var segment = tableIndex.searchForKey(objectKey);
         Optional<byte[]> objectValue = Optional.empty();
         try {
@@ -64,6 +66,7 @@ public class TableImpl implements Table {
 
     @Override
     public void delete(String objectKey) throws DatabaseException {
+        if (objectKey == null) throw new DatabaseException("Null key");
         var segment = tableIndex.searchForKey(objectKey);
         if (segment.isEmpty()) throw new DatabaseException("Segment not found");
         if (segment.get().isReadOnly()) throw new DatabaseException("Segment is readOnly. Can not delete");
