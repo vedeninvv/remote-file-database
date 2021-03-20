@@ -18,6 +18,7 @@ public class DatabaseImpl implements Database {
     private static Map<String, Table> tables = new HashMap<>();
 
     public static Database create(String dbName, Path databaseRoot) throws DatabaseException {
+        if (dbName == null || databaseRoot == null) throw new DatabaseException("Null args");
         databaseRoot = Path.of(databaseRoot.toString() + "/" + dbName);
         try {
             Files.createDirectory(databaseRoot);
@@ -39,6 +40,7 @@ public class DatabaseImpl implements Database {
 
     @Override
     public void createTableIfNotExists(String tableName) throws DatabaseException {
+        if (tableName == null) throw new DatabaseException("null args");
         if (tables.containsKey(tableName)) throw new DatabaseException("Table with this name already exists");
         Table newTable = TableImpl.create(tableName, databaseRoot, new TableIndex());
         tables.put(tableName, newTable);
