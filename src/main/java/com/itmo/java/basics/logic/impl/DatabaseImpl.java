@@ -8,6 +8,7 @@ import com.itmo.java.basics.logic.Table;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -19,7 +20,7 @@ public class DatabaseImpl implements Database {
 
     public static Database create(String dbName, Path databaseRoot) throws DatabaseException {
         if (dbName == null || databaseRoot == null) throw new DatabaseException("Null args");
-        databaseRoot = Path.of(databaseRoot.toString() + "/" + dbName);
+        databaseRoot = Paths.get(databaseRoot.toString(), dbName);
         try {
             Files.createDirectory(databaseRoot);
         } catch (IOException e) {

@@ -8,6 +8,7 @@ import com.itmo.java.basics.logic.Table;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public class TableImpl implements Table {
@@ -17,7 +18,7 @@ public class TableImpl implements Table {
     private Segment curSegment;
 
     static Table create(String tableName, Path pathToDatabaseRoot, TableIndex tableIndex) throws DatabaseException {
-        Path pathToTable = Path.of(pathToDatabaseRoot.toString() + "/" + tableName);
+        Path pathToTable = Paths.get(pathToDatabaseRoot.toString(), tableName);
         try {
             Files.createDirectory(pathToTable);
         } catch (IOException e) {

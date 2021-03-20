@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 public class SegmentImpl implements Segment {
@@ -23,7 +24,7 @@ public class SegmentImpl implements Segment {
     private long curOffset = 0;
 
     static Segment create(String segmentName, Path tableRootPath) throws DatabaseException {
-        Path pathToSegment = Path.of(tableRootPath.toString() + "/" + segmentName);
+        Path pathToSegment = Paths.get(tableRootPath.toString(), segmentName);
         try {
             Files.createFile(pathToSegment);
         } catch (IOException e) {
