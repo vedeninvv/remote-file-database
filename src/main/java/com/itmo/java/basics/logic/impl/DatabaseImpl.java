@@ -24,7 +24,7 @@ public class DatabaseImpl implements Database {
         try {
             Files.createDirectory(databaseRoot);
         } catch (IOException e) {
-            throw new DatabaseException("Can not create a directory", e);
+            throw new DatabaseException("Can not create the directory", e);
         }
         return new DatabaseImpl(dbName, databaseRoot);
     }

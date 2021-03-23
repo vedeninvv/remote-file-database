@@ -28,12 +28,12 @@ public class SegmentImpl implements Segment {
         try {
             Files.createFile(pathToSegment);
         } catch (IOException e) {
-            throw new DatabaseException("Can not create a directory", e);
+            throw new DatabaseException("Can not create the file", e);
         }
         return new SegmentImpl(segmentName, pathToSegment);
     }
 
-    public SegmentImpl(String segmentName, Path pathToSegment) {
+    private SegmentImpl(String segmentName, Path pathToSegment) {
         this.pathToSegment = pathToSegment;
         this.segmentName = segmentName;
     }
@@ -71,8 +71,8 @@ public class SegmentImpl implements Segment {
         if (skippedBytes != offset.get().getOffset())
             throw new IOException("Skipped " + skippedBytes + "bytes, when must skipped " + offset.get().getOffset());
         var databaseRecord = inputStream.readDbUnit();
-        if (databaseRecord.isEmpty()) return Optional.empty();
         inputStream.close();
+        if (databaseRecord.isEmpty()) return Optional.empty();
         return Optional.of(databaseRecord.get().getValue());
     }
 

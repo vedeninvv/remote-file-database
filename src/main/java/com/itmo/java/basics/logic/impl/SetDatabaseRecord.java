@@ -3,8 +3,8 @@ package com.itmo.java.basics.logic.impl;
 import com.itmo.java.basics.logic.WritableDatabaseRecord;
 
 public class SetDatabaseRecord implements WritableDatabaseRecord {
-    private static final int sizeOfKeySize = 4;
-    private static final int sizeOfValueSize = 4;
+    private static final int SIZE_OF_KEY_SIZE = 4;
+    private static final int SIZE_OF_VALUE_SIZE = 4;
     private int keySize, valueSize;
     private byte[] key, value;
 
@@ -27,7 +27,7 @@ public class SetDatabaseRecord implements WritableDatabaseRecord {
 
     @Override
     public long size() {
-        return sizeOfKeySize + keySize + sizeOfValueSize + valueSize;
+        return SIZE_OF_KEY_SIZE + keySize + SIZE_OF_VALUE_SIZE + valueSize;
     }
 
     @Override

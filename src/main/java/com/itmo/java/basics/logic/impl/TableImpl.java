@@ -22,7 +22,7 @@ public class TableImpl implements Table {
         try {
             Files.createDirectory(pathToTable);
         } catch (IOException e) {
-            throw new DatabaseException("Can not create a directory", e);
+            throw new DatabaseException("Can not create the directory", e);
         }
         return new TableImpl(tableName, pathToTable, tableIndex);
     }
@@ -41,11 +41,14 @@ public class TableImpl implements Table {
     @Override
     public void write(String objectKey, byte[] objectValue) throws DatabaseException {
         if (objectKey == null) throw new DatabaseException("Null key");
-        if (curSegment == null || curSegment.isReadOnly())
+        if (curSegment == null)
             curSegment = SegmentImpl.create(SegmentImpl.createSegmentName(tableName), pathToTable);
         try{
             boolean result = curSegment.write(objectKey, objectValue);
-            if (!result) throw new DatabaseException("False result of writing to Segment");
+            if (!result) {
+                curSegment = SegmentImpl.create(SegmentImpl.createSegmentName(tableName), pathToTable);
+                curSegment.write(objectKey, objectValue);
+            }
         }catch (IOException e){
             throw new DatabaseException("Can not write to segment", e);
         }
@@ -70,11 +73,11 @@ public class TableImpl implements Table {
         if (objectKey == null) throw new DatabaseException("Null key");
         var segment = tableIndex.searchForKey(objectKey);
         if (segment.isEmpty()) throw new DatabaseException("Segment not found");
-        if (segment.get().isReadOnly()) throw new DatabaseException("Segment is readOnly. Can not delete");
         try {
-            segment.get().delete(objectKey);
+            boolean result = segment.get().delete(objectKey);
+            if (!result) throw new DatabaseException("Segment is readOnly. Can not delete");
         } catch (IOException e) {
-            throw new DatabaseException("Can not read segment", e);
+            throw new DatabaseException("Can not delete object in segment", e);
         }
         tableIndex.onIndexedEntityUpdated(objectKey, null);
     }
