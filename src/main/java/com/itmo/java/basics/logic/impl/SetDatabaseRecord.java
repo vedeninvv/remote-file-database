@@ -8,7 +8,7 @@ public class SetDatabaseRecord implements WritableDatabaseRecord {
     private int keySize, valueSize;
     private byte[] key, value;
 
-    public SetDatabaseRecord(int keySize, byte[] key, int valueSize, byte[] value){
+    public SetDatabaseRecord(int keySize, byte[] key, int valueSize, byte[] value) {
         this.keySize = keySize;
         this.key = key;
         this.valueSize = valueSize;

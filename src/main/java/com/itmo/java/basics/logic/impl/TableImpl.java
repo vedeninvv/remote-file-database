@@ -22,7 +22,7 @@ public class TableImpl implements Table {
         try {
             Files.createDirectory(pathToTable);
         } catch (IOException e) {
-            throw new DatabaseException("Can not create the directory", e);
+            throw new DatabaseException("IO exception when creating table " + tableName + " with path " + pathToTable.toString(), e);
         }
         return new TableImpl(tableName, pathToTable, tableIndex);
     }
@@ -43,14 +43,14 @@ public class TableImpl implements Table {
         if (objectKey == null) throw new DatabaseException("Null key");
         if (curSegment == null)
             curSegment = SegmentImpl.create(SegmentImpl.createSegmentName(tableName), pathToTable);
-        try{
+        try {
             boolean result = curSegment.write(objectKey, objectValue);
             if (!result) {
                 curSegment = SegmentImpl.create(SegmentImpl.createSegmentName(tableName), pathToTable);
                 curSegment.write(objectKey, objectValue);
             }
-        }catch (IOException e){
-            throw new DatabaseException("Can not write to segment", e);
+        } catch (IOException e) {
+            throw new DatabaseException("IOException when writing to segment " + curSegment.getName() + " by key " + objectKey, e);
         }
         tableIndex.onIndexedEntityUpdated(objectKey, curSegment);
     }
@@ -63,7 +63,7 @@ public class TableImpl implements Table {
         try {
             if (segment.isPresent()) objectValue = segment.get().read(objectKey);
         } catch (IOException e) {
-            throw new DatabaseException("Can not read segment", e);
+            throw new DatabaseException("IOException when reading segment " + curSegment.getName() + " by key " + objectKey, e);
         }
         return objectValue;
     }
@@ -72,12 +72,13 @@ public class TableImpl implements Table {
     public void delete(String objectKey) throws DatabaseException {
         if (objectKey == null) throw new DatabaseException("Null key");
         var segment = tableIndex.searchForKey(objectKey);
-        if (segment.isEmpty()) throw new DatabaseException("Segment not found");
+        if (segment.isEmpty()) throw new DatabaseException("Segment by key " + objectKey + " not found");
         try {
             boolean result = segment.get().delete(objectKey);
-            if (!result) throw new DatabaseException("Segment is readOnly. Can not delete");
+            if (!result)
+                throw new DatabaseException("Segment " + curSegment.getName() + " is readOnly. Can not delete");
         } catch (IOException e) {
-            throw new DatabaseException("Can not delete object in segment", e);
+            throw new DatabaseException("IOException when deleting object in segment " + curSegment.getName() + " by key " + objectKey, e);
         }
         tableIndex.onIndexedEntityUpdated(objectKey, null);
     }

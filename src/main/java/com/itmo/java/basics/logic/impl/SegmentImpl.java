@@ -28,7 +28,7 @@ public class SegmentImpl implements Segment {
         try {
             Files.createFile(pathToSegment);
         } catch (IOException e) {
-            throw new DatabaseException("Can not create the file", e);
+            throw new DatabaseException("IO exception when creating segment " + segmentName + " with path " + pathToSegment.toString(), e);
         }
         return new SegmentImpl(segmentName, pathToSegment);
     }
@@ -49,31 +49,35 @@ public class SegmentImpl implements Segment {
 
     @Override
     public boolean write(String objectKey, byte[] objectValue) throws IOException {
-        if (isReadOnly()) return false;
-        DatabaseOutputStream outputStream = new DatabaseOutputStream(new FileOutputStream(pathToSegment.toString(), true));
-        int writtenBytes;
-        if (objectValue == null)
-            writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), -1, new byte[]{}));
-        else
-            writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), objectValue.length, objectValue));
-        segmentIndex.onIndexedEntityUpdated(objectKey, new SegmentOffsetInfoImpl(curOffset));
-        curOffset += writtenBytes;
-        outputStream.close();
-        return true;
+        if (isReadOnly()) {
+            return false;
+        }
+        try (DatabaseOutputStream outputStream = new DatabaseOutputStream(new FileOutputStream(pathToSegment.toString(), true))) {
+            int writtenBytes;
+            if (objectValue == null)
+                writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), -1, new byte[]{}));
+            else
+                writtenBytes = outputStream.write(new SetDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8), objectValue.length, objectValue));
+            segmentIndex.onIndexedEntityUpdated(objectKey, new SegmentOffsetInfoImpl(curOffset));
+            curOffset += writtenBytes;
+            outputStream.close();
+            return true;
+        }
     }
 
     @Override
     public Optional<byte[]> read(String objectKey) throws IOException {
-        DatabaseInputStream inputStream = new DatabaseInputStream(new FileInputStream(pathToSegment.toString()));
-        var offset = segmentIndex.searchForKey(objectKey);
-        if (offset.isEmpty()) return Optional.empty();
-        long skippedBytes = inputStream.skip(offset.get().getOffset());
-        if (skippedBytes != offset.get().getOffset())
-            throw new IOException("Skipped " + skippedBytes + "bytes, when must skipped " + offset.get().getOffset());
-        var databaseRecord = inputStream.readDbUnit();
-        inputStream.close();
-        if (databaseRecord.isEmpty()) return Optional.empty();
-        return Optional.of(databaseRecord.get().getValue());
+        try (DatabaseInputStream inputStream = new DatabaseInputStream(new FileInputStream(pathToSegment.toString()))) {
+            var offset = segmentIndex.searchForKey(objectKey);
+            if (offset.isEmpty()) return Optional.empty();
+            long skippedBytes = inputStream.skip(offset.get().getOffset());
+            if (skippedBytes != offset.get().getOffset())
+                throw new IOException("Skipped " + skippedBytes + "bytes, when must skipped " + offset.get().getOffset());
+            var databaseRecord = inputStream.readDbUnit();
+            inputStream.close();
+            if (databaseRecord.isEmpty()) return Optional.empty();
+            return Optional.of(databaseRecord.get().getValue());
+        }
     }
 
     @Override
@@ -84,11 +88,12 @@ public class SegmentImpl implements Segment {
     @Override
     public boolean delete(String objectKey) throws IOException {
         if (segmentIndex.searchForKey(objectKey).isEmpty()) return false;
-        DatabaseOutputStream outputStream = new DatabaseOutputStream(new FileOutputStream(pathToSegment.toString(), true));
-        int writtenBytes = outputStream.write(new RemoveDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8)));
-        segmentIndex.onIndexedEntityUpdated(objectKey, null);
-        curOffset += writtenBytes;
-        outputStream.close();
-        return true;
+        try (DatabaseOutputStream outputStream = new DatabaseOutputStream(new FileOutputStream(pathToSegment.toString(), true))) {
+            int writtenBytes = outputStream.write(new RemoveDatabaseRecord(objectKey.length(), objectKey.getBytes(StandardCharsets.UTF_8)));
+            segmentIndex.onIndexedEntityUpdated(objectKey, null);
+            curOffset += writtenBytes;
+            outputStream.close();
+            return true;
+        }
     }
 }

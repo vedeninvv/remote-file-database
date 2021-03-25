@@ -10,7 +10,7 @@ public class RemoveDatabaseRecord implements WritableDatabaseRecord {
     private int keySize;
     private byte[] key;
 
-    public RemoveDatabaseRecord(int keySize, byte[] key){
+    public RemoveDatabaseRecord(int keySize, byte[] key) {
         this.keySize = keySize;
         this.key = key;
     }
