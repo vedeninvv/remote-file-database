@@ -41,7 +41,7 @@ public class TableImpl implements Table {
     @Override
     public void write(String objectKey, byte[] objectValue) throws DatabaseException {
         if (objectKey == null) {
-            throw new DatabaseException("Null key");
+            throw new DatabaseException("ObjectKey is null");
         }
         if (curSegment == null) {
             curSegment = SegmentImpl.create(SegmentImpl.createSegmentName(tableName), pathToTable);
@@ -61,7 +61,7 @@ public class TableImpl implements Table {
     @Override
     public Optional<byte[]> read(String objectKey) throws DatabaseException {
         if (objectKey == null) {
-            throw new DatabaseException("Null key");
+            throw new DatabaseException("ObjectKey is null");
         }
         var segment = tableIndex.searchForKey(objectKey);
         Optional<byte[]> objectValue = Optional.empty();
@@ -78,7 +78,7 @@ public class TableImpl implements Table {
     @Override
     public void delete(String objectKey) throws DatabaseException {
         if (objectKey == null) {
-            throw new DatabaseException("Null key");
+            throw new DatabaseException("ObjectKey is null");
         }
         var segment = tableIndex.searchForKey(objectKey);
         if (segment.isEmpty()) {
