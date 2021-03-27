@@ -6,7 +6,7 @@ public class RemoveDatabaseRecord implements WritableDatabaseRecord {
     private static final int SIZE_OF_KEY_SIZE = 4;
     private static final int SIZE_OF_VALUE_SIZE = 4;
     private static final int VALUE_SIZE = -1;
-    private static final byte[] VALUE = {};
+    private static final byte[] VALUE = null;
     private int keySize;
     private byte[] key;
 

@@ -2,6 +2,7 @@ package com.itmo.java.basics.logic.io;
 
 import com.itmo.java.basics.logic.DatabaseRecord;
 import com.itmo.java.basics.logic.WritableDatabaseRecord;
+import com.itmo.java.basics.logic.impl.RemoveDatabaseRecord;
 import com.itmo.java.basics.logic.impl.SetDatabaseRecord;
 
 import java.io.DataInputStream;
@@ -28,7 +29,7 @@ public class DatabaseInputStream extends DataInputStream {
         int keySize = readInt();
         byte[] key = readNBytes(keySize);
         int valueSize = readInt();
-        if (valueSize == REMOVED_OBJECT_SIZE) return Optional.empty();
+        if (valueSize == REMOVED_OBJECT_SIZE) return Optional.of(new RemoveDatabaseRecord(keySize, key));
         byte[] value = readNBytes(valueSize);
         return Optional.of(new SetDatabaseRecord(keySize, key, valueSize, value));
     }

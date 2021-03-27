@@ -19,7 +19,9 @@ public class DatabaseImpl implements Database {
     private Map<String, Table> tables = new HashMap<>();
 
     public static Database create(String dbName, Path databaseRoot) throws DatabaseException {
-        if (dbName == null || databaseRoot == null) throw new DatabaseException("Null args");
+        if (dbName == null || databaseRoot == null) {
+            throw new DatabaseException("dbName is null or databaseRoot is null");
+        }
         Path PathToDatabase = Paths.get(databaseRoot.toString(), dbName);
         try {
             Files.createDirectory(PathToDatabase);
@@ -41,9 +43,12 @@ public class DatabaseImpl implements Database {
 
     @Override
     public void createTableIfNotExists(String tableName) throws DatabaseException {
-        if (tableName == null) throw new DatabaseException("null args");
-        if (tables.containsKey(tableName))
+        if (tableName == null) {
+            throw new DatabaseException("tableName is null");
+        }
+        if (tables.containsKey(tableName)) {
             throw new DatabaseException("Table with name " + tableName + " already exists");
+        }
         Table newTable = TableImpl.create(tableName, databaseRoot, new TableIndex());
         tables.put(tableName, newTable);
     }
@@ -51,21 +56,27 @@ public class DatabaseImpl implements Database {
     @Override
     public void write(String tableName, String objectKey, byte[] objectValue) throws DatabaseException {
         Table table = tables.get(tableName);
-        if (table == null) throw new DatabaseException("Table with name " + tableName + " not found");
+        if (table == null) {
+            throw new DatabaseException("Table with name " + tableName + " not found");
+        }
         table.write(objectKey, objectValue);
     }
 
     @Override
     public Optional<byte[]> read(String tableName, String objectKey) throws DatabaseException {
         Table table = tables.get(tableName);
-        if (table == null) throw new DatabaseException("Table with name " + tableName + " not found");
+        if (table == null) {
+            throw new DatabaseException("Table with name " + tableName + " not found");
+        }
         return table.read(objectKey);
     }
 
     @Override
     public void delete(String tableName, String objectKey) throws DatabaseException {
         Table table = tables.get(tableName);
-        if (table == null) throw new DatabaseException("Table with name " + tableName + " not found");
+        if (table == null) {
+            throw new DatabaseException("Table with name " + tableName + " not found");
+        }
         table.delete(objectKey);
     }
 }
