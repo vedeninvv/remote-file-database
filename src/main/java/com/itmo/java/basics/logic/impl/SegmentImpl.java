@@ -3,6 +3,7 @@ package com.itmo.java.basics.logic.impl;
 import com.itmo.java.basics.exceptions.DatabaseException;
 import com.itmo.java.basics.index.impl.SegmentIndex;
 import com.itmo.java.basics.index.impl.SegmentOffsetInfoImpl;
+import com.itmo.java.basics.initialization.SegmentInitializationContext;
 import com.itmo.java.basics.logic.DatabaseRecord;
 import com.itmo.java.basics.logic.Segment;
 import com.itmo.java.basics.logic.io.DatabaseInputStream;
@@ -24,7 +25,7 @@ public class SegmentImpl implements Segment {
     private String segmentName;
     private long curOffset = 0;
 
-    static Segment create(String segmentName, Path tableRootPath) throws DatabaseException {
+    public static Segment create(String segmentName, Path tableRootPath) throws DatabaseException {
         Path pathToSegment = Paths.get(tableRootPath.toString(), segmentName);
         try {
             Files.createFile(pathToSegment);
@@ -37,6 +38,13 @@ public class SegmentImpl implements Segment {
     private SegmentImpl(String segmentName, Path pathToSegment) {
         this.pathToSegment = pathToSegment;
         this.segmentName = segmentName;
+    }
+
+    public static Segment initializeFromContext(SegmentInitializationContext context) {
+        var segment = new SegmentImpl(context.getSegmentName(), context.getSegmentPath());
+        segment.segmentIndex = context.getIndex();
+        segment.curOffset = context.getCurrentSize();
+        return segment;
     }
 
     static String createSegmentName(String tableName) {
