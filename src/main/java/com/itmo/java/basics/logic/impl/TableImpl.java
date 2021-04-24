@@ -34,10 +34,13 @@ public class TableImpl implements Table {
         this.tableIndex = tableIndex;
     }
 
+    private TableImpl(TableInitializationContext context){
+        this(context.getTableName(), context.getTablePath(), context.getTableIndex());
+        this.curSegment = context.getCurrentSegment();
+    }
+
     public static Table initializeFromContext(TableInitializationContext context) {
-        var table = new TableImpl(context.getTableName(), context.getTablePath(), context.getTableIndex());
-        table.curSegment = context.getCurrentSegment();
-        return new CachingTable(table);
+        return new CachingTable(new TableImpl(context));
     }
 
     @Override
@@ -70,7 +73,7 @@ public class TableImpl implements Table {
         if (objectKey == null) {
             throw new DatabaseException("ObjectKey is null");
         }
-        var segment = tableIndex.searchForKey(objectKey);
+        Optional<Segment> segment = tableIndex.searchForKey(objectKey);
         Optional<byte[]> objectValue = Optional.empty();
         try {
             if (segment.isPresent()) {
@@ -87,7 +90,7 @@ public class TableImpl implements Table {
         if (objectKey == null) {
             throw new DatabaseException("ObjectKey is null");
         }
-        var segment = tableIndex.searchForKey(objectKey);
+        Optional<Segment> segment = tableIndex.searchForKey(objectKey);
         if (segment.isEmpty()) {
             throw new DatabaseException("Segment by key " + objectKey + " not found");
         }

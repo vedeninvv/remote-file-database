@@ -5,6 +5,8 @@ import com.itmo.java.basics.index.impl.SegmentIndex;
 import com.itmo.java.basics.index.impl.SegmentOffsetInfoImpl;
 import com.itmo.java.basics.initialization.InitializationContext;
 import com.itmo.java.basics.initialization.Initializer;
+import com.itmo.java.basics.logic.DatabaseRecord;
+import com.itmo.java.basics.logic.Segment;
 import com.itmo.java.basics.logic.impl.SegmentImpl;
 import com.itmo.java.basics.logic.io.DatabaseInputStream;
 
@@ -12,7 +14,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Optional;
 
 
 public class SegmentInitializer implements Initializer {
@@ -27,14 +31,14 @@ public class SegmentInitializer implements Initializer {
      */
     @Override
     public void perform(InitializationContext context) throws DatabaseException {
-        var pathToSegment = context.currentSegmentContext().getSegmentPath();
+        Path pathToSegment = context.currentSegmentContext().getSegmentPath();
         try {
-            var segmentInput = new FileInputStream(pathToSegment.toString());
+            FileInputStream segmentInput = new FileInputStream(pathToSegment.toString());
             try (DatabaseInputStream inputStream = new DatabaseInputStream(segmentInput)) {
-                var segmentIndex = new SegmentIndex();
-                var currentSize = context.currentSegmentContext().getCurrentSize();
-                var keyList = new ArrayList<String>();
-                var dbUnit = inputStream.readDbUnit();
+                SegmentIndex segmentIndex = new SegmentIndex();
+                long currentSize = context.currentSegmentContext().getCurrentSize();
+                ArrayList<String> keyList = new ArrayList<String>();
+                Optional<DatabaseRecord> dbUnit = inputStream.readDbUnit();
                 while (dbUnit.isPresent()) {
                     segmentIndex.onIndexedEntityUpdated(new String(dbUnit.get().getKey(), StandardCharsets.UTF_8),
                             new SegmentOffsetInfoImpl(currentSize));
@@ -42,11 +46,11 @@ public class SegmentInitializer implements Initializer {
                     currentSize += dbUnit.get().size();
                     dbUnit = inputStream.readDbUnit();
                 }
-                var segmentContext = new SegmentInitializationContextImpl(context.currentSegmentContext().getSegmentName(),
+                SegmentInitializationContextImpl segmentContext = new SegmentInitializationContextImpl(context.currentSegmentContext().getSegmentName(),
                         context.currentSegmentContext().getSegmentPath(), (int) currentSize, segmentIndex);
-                var segment = SegmentImpl.initializeFromContext(segmentContext);
+                Segment segment = SegmentImpl.initializeFromContext(segmentContext);
                 context.currentTableContext().updateCurrentSegment(segment);
-                for (var key : keyList) {
+                for (String key : keyList) {
                     context.currentTableContext().getTableIndex().onIndexedEntityUpdated(key, segment);
                 }
             } catch (IOException e) {

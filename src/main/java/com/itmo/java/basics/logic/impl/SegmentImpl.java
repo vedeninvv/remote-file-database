@@ -1,6 +1,7 @@
 package com.itmo.java.basics.logic.impl;
 
 import com.itmo.java.basics.exceptions.DatabaseException;
+import com.itmo.java.basics.index.SegmentOffsetInfo;
 import com.itmo.java.basics.index.impl.SegmentIndex;
 import com.itmo.java.basics.index.impl.SegmentOffsetInfoImpl;
 import com.itmo.java.basics.initialization.SegmentInitializationContext;
@@ -40,11 +41,14 @@ public class SegmentImpl implements Segment {
         this.segmentName = segmentName;
     }
 
+    private SegmentImpl(SegmentInitializationContext context){
+        this(context.getSegmentName(), context.getSegmentPath());
+        this.segmentIndex = context.getIndex();
+        this.curOffset = context.getCurrentSize();
+    }
+
     public static Segment initializeFromContext(SegmentInitializationContext context) {
-        var segment = new SegmentImpl(context.getSegmentName(), context.getSegmentPath());
-        segment.segmentIndex = context.getIndex();
-        segment.curOffset = context.getCurrentSize();
-        return segment;
+        return new SegmentImpl(context);
     }
 
     static String createSegmentName(String tableName) {
@@ -77,7 +81,7 @@ public class SegmentImpl implements Segment {
     @Override
     public Optional<byte[]> read(String objectKey) throws IOException {
         try (DatabaseInputStream inputStream = new DatabaseInputStream(new FileInputStream(pathToSegment.toString()))) {
-            var offset = segmentIndex.searchForKey(objectKey);
+            Optional<SegmentOffsetInfo> offset = segmentIndex.searchForKey(objectKey);
             if (offset.isEmpty()) {
                 return Optional.empty();
             }
@@ -85,7 +89,7 @@ public class SegmentImpl implements Segment {
             if (skippedBytes != offset.get().getOffset()) {
                 throw new IOException("Skipped " + skippedBytes + "bytes, when must skipped " + offset.get().getOffset());
             }
-            var databaseRecord = inputStream.readDbUnit();
+            Optional<DatabaseRecord> databaseRecord = inputStream.readDbUnit();
             return databaseRecord.map(DatabaseRecord::getValue);
         }
     }

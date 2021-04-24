@@ -3,6 +3,7 @@ package com.itmo.java.basics.initialization.impl;
 import com.itmo.java.basics.exceptions.DatabaseException;
 import com.itmo.java.basics.initialization.InitializationContext;
 import com.itmo.java.basics.initialization.Initializer;
+import com.itmo.java.basics.logic.Table;
 import com.itmo.java.basics.logic.impl.TableImpl;
 
 import java.io.File;
@@ -25,23 +26,24 @@ public class TableInitializer implements Initializer {
      */
     @Override
     public void perform(InitializationContext context) throws DatabaseException {
-        var tableDir = new File(String.valueOf(context.currentTableContext().getTablePath()));
+        File tableDir = new File(String.valueOf(context.currentTableContext().getTablePath()));
         if (!tableDir.exists()) {
             throw new DatabaseException("Context has incorrect path to table");
         }
         try {
             File[] files = tableDir.listFiles();
             Arrays.sort(files);
-            for (var file : files) {
-                var segmentContext = new SegmentInitializationContextImpl(file.getName(), context.currentTableContext().getTablePath(), 0);
-                var newContext = InitializationContextImpl.builder()
+            for (File file : files) {
+                SegmentInitializationContextImpl segmentContext = new SegmentInitializationContextImpl(file.getName(),
+                        context.currentTableContext().getTablePath(), 0);
+                InitializationContextImpl newContext = InitializationContextImpl.builder()
                         .executionEnvironment(context.executionEnvironment())
                         .currentDatabaseContext(context.currentDbContext())
                         .currentTableContext(context.currentTableContext())
                         .currentSegmentContext(segmentContext).build();
                 segmentInitializer.perform(newContext);
             }
-            var table = TableImpl.initializeFromContext(context.currentTableContext());
+            Table table = TableImpl.initializeFromContext(context.currentTableContext());
             context.currentDbContext().addTable(table);
         } catch (SecurityException e) {
             throw new DatabaseException("Can not read content of directory " + tableDir.getAbsolutePath(), e);

@@ -33,9 +33,12 @@ public class DatabaseImpl implements Database {
     }
 
     public static Database initializeFromContext(DatabaseInitializationContext context) {
-        var database = new DatabaseImpl(context.getDbName(), context.getDatabasePath());
-        database.tables = context.getTables();
-        return database;
+        return new DatabaseImpl(context);
+    }
+
+    private DatabaseImpl(DatabaseInitializationContext context) {
+        this(context.getDbName(), context.getDatabasePath());
+        this.tables = context.getTables();
     }
 
     private DatabaseImpl(String dbName, Path databaseRoot) {

@@ -27,7 +27,7 @@ public class CachingTable implements Table {
 
     @Override
     public Optional<byte[]> read(String objectKey) throws DatabaseException {
-        var objectValue = cache.get(objectKey);
+        byte[] objectValue = cache.get(objectKey);
         if (objectValue != null) {
             return Optional.of(objectValue);
         } else {
