@@ -2,6 +2,7 @@ package com.itmo.java.basics.logic.impl;
 
 import com.itmo.java.basics.exceptions.DatabaseException;
 import com.itmo.java.basics.index.impl.TableIndex;
+import com.itmo.java.basics.initialization.DatabaseInitializationContext;
 import com.itmo.java.basics.logic.Database;
 import com.itmo.java.basics.logic.Table;
 
@@ -15,7 +16,7 @@ import java.util.Optional;
 
 public class DatabaseImpl implements Database {
     private String dbName;
-    private Path databaseRoot;
+    private Path databasePath;
     private Map<String, Table> tables = new HashMap<>();
 
     public static Database create(String dbName, Path databaseRoot) throws DatabaseException {
@@ -31,9 +32,18 @@ public class DatabaseImpl implements Database {
         return new DatabaseImpl(dbName, PathToDatabase);
     }
 
+    public static Database initializeFromContext(DatabaseInitializationContext context) {
+        return new DatabaseImpl(context);
+    }
+
+    private DatabaseImpl(DatabaseInitializationContext context) {
+        this(context.getDbName(), context.getDatabasePath());
+        this.tables = context.getTables();
+    }
+
     private DatabaseImpl(String dbName, Path databaseRoot) {
         this.dbName = dbName;
-        this.databaseRoot = databaseRoot;
+        this.databasePath = databaseRoot;
     }
 
     @Override
@@ -49,7 +59,7 @@ public class DatabaseImpl implements Database {
         if (tables.containsKey(tableName)) {
             throw new DatabaseException("Table with name " + tableName + " already exists");
         }
-        Table newTable = TableImpl.create(tableName, databaseRoot, new TableIndex());
+        Table newTable = TableImpl.create(tableName, databasePath, new TableIndex());
         tables.put(tableName, newTable);
     }
 

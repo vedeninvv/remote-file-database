@@ -1,8 +1,10 @@
 package com.itmo.java.basics.logic.impl;
 
 import com.itmo.java.basics.exceptions.DatabaseException;
+import com.itmo.java.basics.index.SegmentOffsetInfo;
 import com.itmo.java.basics.index.impl.SegmentIndex;
 import com.itmo.java.basics.index.impl.SegmentOffsetInfoImpl;
+import com.itmo.java.basics.initialization.SegmentInitializationContext;
 import com.itmo.java.basics.logic.DatabaseRecord;
 import com.itmo.java.basics.logic.Segment;
 import com.itmo.java.basics.logic.io.DatabaseInputStream;
@@ -24,7 +26,7 @@ public class SegmentImpl implements Segment {
     private String segmentName;
     private long curOffset = 0;
 
-    static Segment create(String segmentName, Path tableRootPath) throws DatabaseException {
+    public static Segment create(String segmentName, Path tableRootPath) throws DatabaseException {
         Path pathToSegment = Paths.get(tableRootPath.toString(), segmentName);
         try {
             Files.createFile(pathToSegment);
@@ -37,6 +39,16 @@ public class SegmentImpl implements Segment {
     private SegmentImpl(String segmentName, Path pathToSegment) {
         this.pathToSegment = pathToSegment;
         this.segmentName = segmentName;
+    }
+
+    private SegmentImpl(SegmentInitializationContext context){
+        this(context.getSegmentName(), context.getSegmentPath());
+        this.segmentIndex = context.getIndex();
+        this.curOffset = context.getCurrentSize();
+    }
+
+    public static Segment initializeFromContext(SegmentInitializationContext context) {
+        return new SegmentImpl(context);
     }
 
     static String createSegmentName(String tableName) {
@@ -69,7 +81,7 @@ public class SegmentImpl implements Segment {
     @Override
     public Optional<byte[]> read(String objectKey) throws IOException {
         try (DatabaseInputStream inputStream = new DatabaseInputStream(new FileInputStream(pathToSegment.toString()))) {
-            var offset = segmentIndex.searchForKey(objectKey);
+            Optional<SegmentOffsetInfo> offset = segmentIndex.searchForKey(objectKey);
             if (offset.isEmpty()) {
                 return Optional.empty();
             }
@@ -77,7 +89,7 @@ public class SegmentImpl implements Segment {
             if (skippedBytes != offset.get().getOffset()) {
                 throw new IOException("Skipped " + skippedBytes + "bytes, when must skipped " + offset.get().getOffset());
             }
-            var databaseRecord = inputStream.readDbUnit();
+            Optional<DatabaseRecord> databaseRecord = inputStream.readDbUnit();
             return databaseRecord.map(DatabaseRecord::getValue);
         }
     }

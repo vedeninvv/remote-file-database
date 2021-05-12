@@ -2,6 +2,7 @@ package com.itmo.java.basics.logic.impl;
 
 import com.itmo.java.basics.exceptions.DatabaseException;
 import com.itmo.java.basics.index.impl.TableIndex;
+import com.itmo.java.basics.initialization.TableInitializationContext;
 import com.itmo.java.basics.logic.Segment;
 import com.itmo.java.basics.logic.Table;
 
@@ -17,20 +18,29 @@ public class TableImpl implements Table {
     private TableIndex tableIndex;
     private Segment curSegment;
 
-    static Table create(String tableName, Path pathToDatabaseRoot, TableIndex tableIndex) throws DatabaseException {
+    public static Table create(String tableName, Path pathToDatabaseRoot, TableIndex tableIndex) throws DatabaseException {
         Path pathToTable = Paths.get(pathToDatabaseRoot.toString(), tableName);
         try {
             Files.createDirectory(pathToTable);
         } catch (IOException e) {
             throw new DatabaseException("IO exception when creating table " + tableName + " with path " + pathToTable.toString(), e);
         }
-        return new TableImpl(tableName, pathToTable, tableIndex);
+        return new CachingTable(new TableImpl(tableName, pathToTable, tableIndex));
     }
 
     private TableImpl(String tableName, Path pathToTable, TableIndex tableIndex) {
         this.tableName = tableName;
         this.pathToTable = pathToTable;
         this.tableIndex = tableIndex;
+    }
+
+    private TableImpl(TableInitializationContext context){
+        this(context.getTableName(), context.getTablePath(), context.getTableIndex());
+        this.curSegment = context.getCurrentSegment();
+    }
+
+    public static Table initializeFromContext(TableInitializationContext context) {
+        return new CachingTable(new TableImpl(context));
     }
 
     @Override
@@ -63,7 +73,7 @@ public class TableImpl implements Table {
         if (objectKey == null) {
             throw new DatabaseException("ObjectKey is null");
         }
-        var segment = tableIndex.searchForKey(objectKey);
+        Optional<Segment> segment = tableIndex.searchForKey(objectKey);
         Optional<byte[]> objectValue = Optional.empty();
         try {
             if (segment.isPresent()) {
@@ -80,7 +90,7 @@ public class TableImpl implements Table {
         if (objectKey == null) {
             throw new DatabaseException("ObjectKey is null");
         }
-        var segment = tableIndex.searchForKey(objectKey);
+        Optional<Segment> segment = tableIndex.searchForKey(objectKey);
         if (segment.isEmpty()) {
             throw new DatabaseException("Segment by key " + objectKey + " not found");
         }
