@@ -50,13 +50,13 @@ public class SetKeyCommand implements DatabaseCommand {
         try {
             Optional<Database> database = env.getDatabase(databaseName);
             if (database.isEmpty()){
-                return new FailedDatabaseCommandResult("Not found database " + databaseName);
+                return DatabaseCommandResult.error("Not found database " + databaseName);
             }
             Optional<byte[]> previousValue = database.get().read(tableName, key);
             database.get().write(tableName, key, value.getBytes(StandardCharsets.UTF_8));
-            return new SuccessDatabaseCommandResult(previousValue.orElse("null".getBytes(StandardCharsets.UTF_8)));
+            return DatabaseCommandResult.success(previousValue.orElse("null".getBytes(StandardCharsets.UTF_8)));
         } catch (DatabaseException e){
-            return new FailedDatabaseCommandResult("DatabaseException when try to set value by key " + key + " in table " +
+            return DatabaseCommandResult.error("DatabaseException when try to set value by key " + key + " in table " +
                     tableName + " with value " + value);
         }
     }

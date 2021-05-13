@@ -46,8 +46,8 @@ public class CreateDatabaseCommand implements DatabaseCommand {
         try {
             env.addDatabase(factory.createNonExistent(databaseName, env.getWorkingPath()));
         } catch (DatabaseException e){
-            return new FailedDatabaseCommandResult("DatabaseException when try to create database " + databaseName + "with path " + env.getWorkingPath());
+            return DatabaseCommandResult.error("DatabaseException when try to create database " + databaseName + "with path " + env.getWorkingPath());
         }
-        return new SuccessDatabaseCommandResult(("Database " + databaseName + " was created").getBytes(StandardCharsets.UTF_8));
+        return DatabaseCommandResult.success(("Database " + databaseName + " was created").getBytes(StandardCharsets.UTF_8));
     }
 }
