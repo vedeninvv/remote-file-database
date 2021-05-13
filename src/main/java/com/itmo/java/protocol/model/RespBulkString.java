@@ -54,8 +54,8 @@ public class RespBulkString implements RespObject {
             os.write(String.valueOf(data.length).getBytes(StandardCharsets.UTF_8));
             os.write(CRLF);
             os.write(data);
-            os.write(CRLF);
         }
+        os.write(CRLF);
         os.flush();
     }
 }

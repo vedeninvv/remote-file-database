@@ -44,12 +44,12 @@ public class CreateTableCommand implements DatabaseCommand {
     public DatabaseCommandResult execute() {
         try {
             if (env.getDatabase(databaseName).isEmpty()){
-                return DatabaseCommandResult.error("Not found database " + databaseName);
+                return new FailedDatabaseCommandResult("Not found database " + databaseName);
             }
             env.getDatabase(databaseName).get().createTableIfNotExists(tableName);
         } catch (DatabaseException e){
-            return DatabaseCommandResult.error("DatabaseException when try to create table " + tableName);
+            return new FailedDatabaseCommandResult("DatabaseException when try to create table " + tableName);
         }
-        return DatabaseCommandResult.success(("Table " + tableName + " was created").getBytes(StandardCharsets.UTF_8));
+        return new SuccessDatabaseCommandResult(("Table " + tableName + " was created").getBytes(StandardCharsets.UTF_8));
     }
 }
