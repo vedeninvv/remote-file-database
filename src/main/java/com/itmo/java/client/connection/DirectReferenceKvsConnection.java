@@ -21,20 +21,14 @@ public class DirectReferenceKvsConnection implements KvsConnection {
 
     @Override
     public RespObject send(int commandId, RespArray command) throws ConnectionException {
-        RespObject[] respObjects = new RespObject[command.getObjects().size() + 1];
-        respObjects[0] = new RespCommandId(commandId);
-        for (int i = 0; i < command.getObjects().size(); i++) {
-            respObjects[i + 1] = command.getObjects().get(i);
-        }
-        RespArray message = new RespArray(respObjects);
         try {
-            return databaseServer.executeNextCommand(message).get().serialize();
+            return databaseServer.executeNextCommand(command).get().serialize();
         } catch (InterruptedException e) {
             throw new ConnectionException("ConnectionException when try to get result from server because of interruption when message is '" +
-                    message.asString() + "'", e);
+                    command.asString() + "'", e);
         } catch (ExecutionException e) {
             throw new ConnectionException("ConnectionException when try to get result from server because of ExecutionException when message is '" +
-                    message.asString() + "'", e);
+                    command.asString() + "'", e);
         }
     }
 
