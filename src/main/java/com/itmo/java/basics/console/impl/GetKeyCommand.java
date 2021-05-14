@@ -50,7 +50,7 @@ public class GetKeyCommand implements DatabaseCommand {
                 return DatabaseCommandResult.error("Not found database " + databaseName);
             }
             Optional<byte[]> value = database.get().read(tableName, key);
-            return DatabaseCommandResult.success(value.orElse("null".getBytes(StandardCharsets.UTF_8)));
+            return DatabaseCommandResult.success(value.orElse(null));
         } catch (DatabaseException e){
             return DatabaseCommandResult.error("DatabaseException when try to get value by key " + key + " in table " + tableName);
         }

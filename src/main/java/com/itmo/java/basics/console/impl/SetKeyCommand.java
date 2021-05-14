@@ -54,7 +54,7 @@ public class SetKeyCommand implements DatabaseCommand {
             }
             Optional<byte[]> previousValue = database.get().read(tableName, key);
             database.get().write(tableName, key, value.getBytes(StandardCharsets.UTF_8));
-            return DatabaseCommandResult.success(previousValue.orElse("null".getBytes(StandardCharsets.UTF_8)));
+            return DatabaseCommandResult.success(previousValue.orElse(null));
         } catch (DatabaseException e){
             return DatabaseCommandResult.error("DatabaseException when try to set value by key " + key + " in table " +
                     tableName + " with value " + value);
