@@ -4,14 +4,23 @@ import com.itmo.java.basics.console.DatabaseCommand;
 import com.itmo.java.basics.console.DatabaseCommandArgPositions;
 import com.itmo.java.basics.console.DatabaseCommandResult;
 import com.itmo.java.basics.console.ExecutionEnvironment;
+import com.itmo.java.basics.exceptions.DatabaseException;
+import com.itmo.java.basics.logic.Database;
 import com.itmo.java.protocol.model.RespObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Команда для создания записи значения
  */
 public class SetKeyCommand implements DatabaseCommand {
+    private final ExecutionEnvironment env;
+    private final String databaseName;
+    private final String tableName;
+    private final String key;
+    private final String value;
 
     /**
      * Создает команду.
@@ -24,7 +33,11 @@ public class SetKeyCommand implements DatabaseCommand {
      * @throws IllegalArgumentException если передано неправильное количество аргументов
      */
     public SetKeyCommand(ExecutionEnvironment env, List<RespObject> commandArgs) {
-        //TODO implement
+        this.env = env;
+        this.databaseName = commandArgs.get(DatabaseCommandArgPositions.DATABASE_NAME.getPositionIndex()).asString();
+        this.tableName = commandArgs.get(DatabaseCommandArgPositions.TABLE_NAME.getPositionIndex()).asString();
+        this.key = commandArgs.get(DatabaseCommandArgPositions.KEY.getPositionIndex()).asString();
+        this.value = commandArgs.get(DatabaseCommandArgPositions.VALUE.getPositionIndex()).asString();
     }
 
     /**
@@ -34,7 +47,17 @@ public class SetKeyCommand implements DatabaseCommand {
      */
     @Override
     public DatabaseCommandResult execute() {
-        //TODO implement
-        return null;
+        try {
+            Optional<Database> database = env.getDatabase(databaseName);
+            if (database.isEmpty()){
+                return DatabaseCommandResult.error("Not found database " + databaseName);
+            }
+            Optional<byte[]> previousValue = database.get().read(tableName, key);
+            database.get().write(tableName, key, value.getBytes(StandardCharsets.UTF_8));
+            return DatabaseCommandResult.success(previousValue.orElse(null));
+        } catch (DatabaseException e){
+            return DatabaseCommandResult.error("DatabaseException when try to set value by key " + key + " in table " +
+                    tableName + " with value " + value);
+        }
     }
 }
