@@ -34,9 +34,6 @@ public class CommandReader implements AutoCloseable {
      */
     public DatabaseCommand readCommand() throws IOException {
         RespObject respObject = reader.readObject();
-        if (!(respObject instanceof RespArray)){
-            throw new IOException("The data read is not a command");
-        }
         RespArray respArray = (RespArray) respObject;
         if (respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex()).asString().isEmpty()){
             throw new IllegalArgumentException("Command id does not exist");
