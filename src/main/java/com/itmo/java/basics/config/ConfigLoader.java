@@ -1,22 +1,30 @@
 package com.itmo.java.basics.config;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Класс, отвечающий за подгрузку данных из конфигурационного файла формата .properties
  */
 public class ConfigLoader {
+    private static final String DEFAULT_PROPERTY_FILE = "server.properties";
+
+    private final InputStream propertyInputStream;
 
     /**
      * По умолчанию читает из server.properties
      */
     public ConfigLoader() {
-        //TODO implement
+       propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
     }
 
     /**
      * @param name Имя конфикурационного файла, откуда читать
      */
     public ConfigLoader(String name) {
-        //TODO implement
+        this.propertyInputStream = getClass().getResourceAsStream(name);
     }
 
     /**
@@ -27,7 +35,29 @@ public class ConfigLoader {
      * Читаются: "kvs.workingPath", "kvs.host", "kvs.port" (но в конфигурационном файле допустимы и другие проперти)
      */
     public DatabaseServerConfig readConfig() {
-        //TODO implement
-        return null;
+        Properties properties = new Properties();
+        try {
+            properties.load(propertyInputStream);
+            String workingPath = properties.getProperty("kvs.workingPath");
+            String host = properties.getProperty("kvs.host");
+            int port;
+            if (workingPath == null || host == null){
+                throw new IOException("WorkingPath or host is null");
+            }
+            try {
+                port = Integer.parseInt(properties.getProperty("kvs.port"));
+            } catch (NumberFormatException e){
+                throw new IOException("Port is not an integer");
+            }
+            return DatabaseServerConfig.builder()
+                    .dbConfig(new DatabaseConfig(workingPath))
+                    .serverConfig(new ServerConfig(host, port))
+                    .build();
+        } catch (IOException e) {
+            return DatabaseServerConfig.builder()
+                    .dbConfig(new DatabaseConfig())
+                    .serverConfig(new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT))
+                    .build();
+        }
     }
 }

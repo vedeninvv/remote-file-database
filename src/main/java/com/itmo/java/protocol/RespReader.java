@@ -1,16 +1,13 @@
 package com.itmo.java.protocol;
 
-import com.itmo.java.protocol.model.RespArray;
-import com.itmo.java.protocol.model.RespBulkString;
-import com.itmo.java.protocol.model.RespCommandId;
-import com.itmo.java.protocol.model.RespError;
-import com.itmo.java.protocol.model.RespObject;
+import com.itmo.java.protocol.model.*;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class RespReader implements AutoCloseable {
+    private static final int READ_AHEAD_LIMIT = 3;
+    private final BufferedReader bufferedReader;
 
     /**
      * Специальные символы окончания элемента
@@ -19,15 +16,17 @@ public class RespReader implements AutoCloseable {
     private static final byte LF = '\n';
 
     public RespReader(InputStream is) {
-        //TODO implement
+        bufferedReader = new BufferedReader(new InputStreamReader(is));
     }
 
     /**
      * Есть ли следующий массив в стриме?
      */
     public boolean hasArray() throws IOException {
-        //TODO implement
-        return false;
+        bufferedReader.mark(READ_AHEAD_LIMIT);
+        byte code = (byte) bufferedReader.read();
+        bufferedReader.reset();
+        return code == RespArray.CODE;
     }
 
     /**
@@ -38,8 +37,23 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespObject readObject() throws IOException {
-        //TODO implement
-        return null;
+        int codeInt = bufferedReader.read();
+        if (codeInt == -1) {
+            throw new EOFException("InputStream is empty when try to read RespObject");
+        }
+        byte code = (byte) codeInt;
+        switch (code) {
+            case RespArray.CODE:
+                return readArray();
+            case RespBulkString.CODE:
+                return readBulkString();
+            case RespCommandId.CODE:
+                return readCommandId();
+            case RespError.CODE:
+                return readError();
+            default:
+                throw new IOException("Code character is not correct");
+        }
     }
 
     /**
@@ -49,8 +63,11 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespError readError() throws IOException {
-        //TODO implement
-        return null;
+        String message = bufferedReader.readLine();
+        if (message.isEmpty()) {
+            throw new EOFException("InputStream is empty when try to read Error");
+        }
+        return new RespError(message.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -60,8 +77,19 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespBulkString readBulkString() throws IOException {
-        //TODO implement
-        return null;
+        String stringSizeStr = bufferedReader.readLine();
+        if (stringSizeStr.isEmpty()) {
+            throw new EOFException("InputStream is empty when try to read BulkString");
+        }
+        int stringSize = Integer.parseInt(stringSizeStr);
+        if (stringSize == RespBulkString.NULL_STRING_SIZE) {
+            return RespBulkString.NULL_STRING;
+        }
+        String stringData = bufferedReader.readLine();
+        if (stringData.length() != stringSize) {
+            throw new IOException("String length is not equal with StringBulk size");
+        }
+        return new RespBulkString(stringData.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -71,8 +99,16 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespArray readArray() throws IOException {
-        //TODO implement
-        return null;
+        String arraySizeStr = bufferedReader.readLine();
+        if (arraySizeStr.isEmpty()) {
+            throw new EOFException("InputStream is empty when try to read Array");
+        }
+        int arraySize = Integer.parseInt(arraySizeStr);
+        RespObject[] respObjectArray = new RespObject[arraySize];
+        for (int i = 0; i < arraySize; i++) {
+            respObjectArray[i] = readObject();
+        }
+        return new RespArray(respObjectArray);
     }
 
     /**
@@ -82,13 +118,20 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespCommandId readCommandId() throws IOException {
-        //TODO implement
-        return null;
+        String idStr = bufferedReader.readLine();
+        if (idStr.isEmpty()) {
+            throw new EOFException("InputStream is empty when try to read CommandId");
+        }
+        return new RespCommandId(bytesToInt(idStr.getBytes(StandardCharsets.UTF_8)));
     }
 
 
     @Override
     public void close() throws IOException {
-        //TODO implement
+        bufferedReader.close();
+    }
+
+    private static int bytesToInt(byte[] bytes) {
+        return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
     }
 }

@@ -1,23 +1,30 @@
 package com.itmo.java.basics.resp;
 
 import com.itmo.java.basics.console.DatabaseCommand;
+import com.itmo.java.basics.console.DatabaseCommandArgPositions;
+import com.itmo.java.basics.console.DatabaseCommands;
 import com.itmo.java.basics.console.ExecutionEnvironment;
+import com.itmo.java.basics.console.impl.CreateDatabaseCommand;
 import com.itmo.java.protocol.RespReader;
+import com.itmo.java.protocol.model.RespArray;
+import com.itmo.java.protocol.model.RespObject;
 
 import java.io.IOException;
 
 public class CommandReader implements AutoCloseable {
+    private final RespReader reader;
+    private final ExecutionEnvironment env;
 
     public CommandReader(RespReader reader, ExecutionEnvironment env) {
-        //TODO implement
+        this.reader = reader;
+        this.env = env;
     }
 
     /**
      * Есть ли следующая команда в ридере?
      */
     public boolean hasNextCommand() throws IOException {
-        //TODO implement
-        return false;
+        return reader.hasArray();
     }
 
     /**
@@ -26,12 +33,23 @@ public class CommandReader implements AutoCloseable {
      * @throws IllegalArgumentException если нет имени команды и id
      */
     public DatabaseCommand readCommand() throws IOException {
-        //TODO implement
-        return null;
+        RespObject respObject = reader.readObject();
+        if (!(respObject instanceof RespArray)){
+            throw new IOException("The data read is not a command");
+        }
+        RespArray respArray = (RespArray) respObject;
+        if (respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex()).asString().isEmpty()){
+            throw new IllegalArgumentException("Command id does not exist");
+        }
+        String commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex()).asString();
+        if (commandName.isEmpty()){
+            throw new IllegalArgumentException("Command name does not exist");
+        }
+        return DatabaseCommands.valueOf(commandName).getCommand(env, respArray.getObjects());
     }
 
     @Override
     public void close() throws Exception {
-        //TODO implement
+        reader.close();
     }
 }
