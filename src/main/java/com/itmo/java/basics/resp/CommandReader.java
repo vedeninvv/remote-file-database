@@ -35,14 +35,14 @@ public class CommandReader implements AutoCloseable {
     public DatabaseCommand readCommand() throws IOException {
         RespObject respObject = reader.readObject();
         RespArray respArray = (RespArray) respObject;
-        if (respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex()).asString().isEmpty()){
+        if (respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex()) == null){
             throw new IllegalArgumentException("Command id does not exist");
         }
-        String commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex()).asString();
-        if (commandName.isEmpty()){
+        RespObject commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex());
+        if (commandName == null){
             throw new IllegalArgumentException("Command name does not exist");
         }
-        return DatabaseCommands.valueOf(commandName).getCommand(env, respArray.getObjects());
+        return DatabaseCommands.valueOf(commandName.asString()).getCommand(env, respArray.getObjects());
     }
 
     @Override
