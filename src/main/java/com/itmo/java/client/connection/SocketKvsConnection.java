@@ -16,7 +16,7 @@ import java.net.UnknownHostException;
 public class SocketKvsConnection implements KvsConnection {
     private final int port;
     private final String host;
-    private Socket clientSocket;
+    private final Socket clientSocket;
 
     public SocketKvsConnection(ConnectionConfig config) {
         this.port = config.getPort();
@@ -40,9 +40,7 @@ public class SocketKvsConnection implements KvsConnection {
             RespWriter respWriter = new RespWriter(clientSocket.getOutputStream());
             respWriter.write(command);
             RespReader respReader = new RespReader(clientSocket.getInputStream());
-            RespObject result = respReader.readObject();
-            close();
-            return result;
+            return respReader.readObject();
         } catch (IOException e) {
             throw new ConnectionException("IOException when send " + command.asString() + " with " + host + " and port " + port, e);
         }
