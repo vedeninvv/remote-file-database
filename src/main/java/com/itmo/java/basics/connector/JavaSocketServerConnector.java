@@ -64,11 +64,14 @@ public class JavaSocketServerConnector implements Closeable {
     @Override
     public void close() {
         System.out.println("Stopping socket connector");
+        connectionAcceptorExecutor.shutdown();
         clientIOWorkers.shutdown();
-        try {
-            serverSocket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (serverSocket != null) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                throw new RuntimeException("IOException when try to close connection", e);
+            }
         }
     }
 
@@ -116,8 +119,8 @@ public class JavaSocketServerConnector implements Closeable {
                     respWriter.write(commandResult.get().serialize());
                 }
             } catch (Exception e) {
-                e.printStackTrace();
                 close();
+                throw new RuntimeException("When try to read, write or execute command", e);
             }
         }
 
@@ -129,7 +132,7 @@ public class JavaSocketServerConnector implements Closeable {
             try {
                 client.close();
             } catch (IOException e){
-                e.printStackTrace();
+                throw new RuntimeException("When try to close client connection", e);
             }
         }
     }
