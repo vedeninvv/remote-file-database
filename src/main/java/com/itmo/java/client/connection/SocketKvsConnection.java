@@ -21,6 +21,11 @@ public class SocketKvsConnection implements KvsConnection {
     public SocketKvsConnection(ConnectionConfig config) {
         this.port = config.getPort();
         this.host = config.getHost();
+        try {
+            this.clientSocket = new Socket(host, port);
+        } catch (IOException e) {
+            throw new RuntimeException("IOException when try to connect by " + host + " " + port, e);
+        }
     }
 
     /**
@@ -31,17 +36,13 @@ public class SocketKvsConnection implements KvsConnection {
      */
     @Override
     public synchronized RespObject send(int commandId, RespArray command) throws ConnectionException {
-        try(Socket clientSocket = new Socket(host, port)){
-            this.clientSocket = clientSocket;
+        try {
             RespWriter respWriter = new RespWriter(clientSocket.getOutputStream());
             respWriter.write(command);
             RespReader respReader = new RespReader(clientSocket.getInputStream());
             return respReader.readObject();
         } catch (IOException e) {
-            throw new ConnectionException("IOException when connect with " + host + " and port " + port, e);
-        }
-        catch (IllegalArgumentException e) {
-            throw new ConnectionException("port is incorrect", e);
+            throw new ConnectionException("IOException when send " + command.asString() + " with " + host + " and port " + port, e);
         }
     }
 
@@ -53,7 +54,7 @@ public class SocketKvsConnection implements KvsConnection {
         try {
             clientSocket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("IOException when try to close client socket");
         }
     }
 }
