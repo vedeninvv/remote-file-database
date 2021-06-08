@@ -2,10 +2,7 @@ package com.itmo.java.protocol;
 
 import com.itmo.java.protocol.model.*;
 
-import java.io.EOFException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
@@ -27,9 +24,10 @@ public class RespReader implements AutoCloseable {
      * Есть ли следующий массив в стриме?
      */
     public boolean hasArray() throws IOException {
-        reader.mark(READ_AHEAD_LIMIT);
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        bufferedReader.mark(READ_AHEAD_LIMIT);
         byte code = (byte) reader.read();
-        reader.reset();
+        bufferedReader.reset();
         return code == RespArray.CODE;
     }
 
@@ -136,8 +134,17 @@ public class RespReader implements AutoCloseable {
             if (currentByte == -1) {
                 throw new EOFException("Stream is empty when try to read all bytes before '\\r\\n'");
             }
-            if (currentByte == '\r') {
-                break;
+            if (currentByte == CR) {
+                int nextByte = reader.read();
+                if (nextByte == -1) {
+                    throw new EOFException("Stream is empty when try to read all bytes before '\\r\\n'");
+                }
+                if (nextByte == LF){
+                    break;
+                }else {
+                    message.add((byte) currentByte);
+                    currentByte = nextByte;
+                }
             }
             message.add((byte) currentByte);
         }
