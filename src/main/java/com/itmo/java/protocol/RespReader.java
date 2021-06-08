@@ -44,17 +44,29 @@ public class RespReader implements AutoCloseable {
         byte code = (byte) codeInt;
         switch (code) {
             case RespArray.CODE:
-                var result = readArray();
-                if (result == null){
+                var result1 = readArray();
+                if (result1 == null){
                     throw new NullPointerException("RespArray!!");
                 }
-                return result;
+                return result1;
             case RespBulkString.CODE:
-                return readBulkString();
+                var result2 = readBulkString();
+                if (result2 == null){
+                    throw new NullPointerException("RespBulkString!!");
+                }
+                return result2;
             case RespCommandId.CODE:
-                return readCommandId();
+                var result3 = readCommandId();
+                if (result3 == null){
+                    throw new NullPointerException("CommandID!!");
+                }
+                return result3;
             case RespError.CODE:
-                return readError();
+                var result4 = readError();
+                if (result4 == null){
+                    throw new NullPointerException("RespError!!");
+                }
+                return result4;
             default:
                 throw new IOException("Code character is not correct");
         }
