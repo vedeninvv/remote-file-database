@@ -93,6 +93,8 @@ public class JavaSocketServerConnector implements Closeable {
     static class ClientTask implements Runnable, Closeable {
         private final Socket client;
         private final DatabaseServer server;
+        private final CommandReader commandReader;
+        private final RespWriter respWriter;
 
         /**
          * @param client клиентский сокет
@@ -101,6 +103,12 @@ public class JavaSocketServerConnector implements Closeable {
         public ClientTask(Socket client, DatabaseServer server) {
             this.client = client;
             this.server = server;
+            try {
+                this.commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv());
+                this.respWriter = new RespWriter(client.getOutputStream());
+            } catch (IOException e){
+                throw new RuntimeException("IOException when open socket streams", e);
+            }
         }
 
         /**
@@ -112,8 +120,7 @@ public class JavaSocketServerConnector implements Closeable {
          */
         @Override
         public void run() {
-            try (CommandReader commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv());
-                 RespWriter respWriter = new RespWriter(client.getOutputStream())) {
+            try {
                 while (commandReader.hasNextCommand()) {
                     CompletableFuture<DatabaseCommandResult> commandResult = server.executeNextCommand(commandReader.readCommand());
                     respWriter.write(commandResult.get().serialize());
