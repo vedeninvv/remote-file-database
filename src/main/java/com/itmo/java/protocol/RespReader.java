@@ -44,7 +44,11 @@ public class RespReader implements AutoCloseable {
         byte code = (byte) codeInt;
         switch (code) {
             case RespArray.CODE:
-                return readArray();
+                var result = readArray();
+                if (result == null){
+                    throw new NullPointerException("RespArray!!");
+                }
+                return result;
             case RespBulkString.CODE:
                 return readBulkString();
             case RespCommandId.CODE:
