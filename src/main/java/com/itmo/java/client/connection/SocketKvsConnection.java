@@ -40,8 +40,9 @@ public class SocketKvsConnection implements KvsConnection {
             RespWriter respWriter = new RespWriter(clientSocket.getOutputStream());
             respWriter.write(command);
             RespReader respReader = new RespReader(clientSocket.getInputStream());
+            RespObject result = respReader.readObject();
             close();
-            return respReader.readObject();
+            return result;
         } catch (IOException e) {
             throw new ConnectionException("IOException when send " + command.asString() + " with " + host + " and port " + port, e);
         }
