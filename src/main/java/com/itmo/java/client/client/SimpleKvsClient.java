@@ -6,6 +6,7 @@ import com.itmo.java.client.exception.ConnectionException;
 import com.itmo.java.client.exception.DatabaseExecutionException;
 import com.itmo.java.protocol.model.RespObject;
 
+import java.util.Arrays;
 import java.util.function.Supplier;
 
 public class SimpleKvsClient implements KvsClient {
@@ -61,8 +62,8 @@ public class SimpleKvsClient implements KvsClient {
             }
             return result.asString();
         } catch (ConnectionException e) {
-            throw new DatabaseExecutionException(String.format("DatabaseExecutionException when try to send '%s %s' with kvsConnection",
-                    command.getCommandId(), command.serialize().asString()), e);
+            throw new DatabaseExecutionException(String.format("DatabaseExecutionException when try to send '%s' with kvsConnection" + " Message:: " + e.getMessage() + " StackTrace:: " + Arrays.toString(e.getStackTrace()),
+                    command.serialize().asString()), e);
         }
     }
 }
