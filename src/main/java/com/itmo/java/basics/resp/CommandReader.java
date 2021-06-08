@@ -11,7 +11,6 @@ import com.itmo.java.protocol.model.RespBulkString;
 import com.itmo.java.protocol.model.RespCommandId;
 import com.itmo.java.protocol.model.RespObject;
 
-import java.io.EOFException;
 import java.io.IOException;
 
 public class CommandReader implements AutoCloseable {
@@ -36,17 +35,7 @@ public class CommandReader implements AutoCloseable {
      * @throws IllegalArgumentException если нет имени команды и id
      */
     public DatabaseCommand readCommand() throws IOException {
-        RespObject respObject;
-        try {
-            respObject = reader.readObject();
-        } catch (EOFException e){
-            throw new RuntimeException("throw EOF");
-        } catch (IOException e){
-            throw new RuntimeException("throw IOE");
-        }
-        catch (NullPointerException e){
-            throw new RuntimeException(e.getMessage());
-        }
+        RespObject respObject = reader.readObject();
         if (respObject == null) {
             throw new RuntimeException("Null object");
         }
