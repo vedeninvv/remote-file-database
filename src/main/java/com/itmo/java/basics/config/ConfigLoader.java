@@ -62,7 +62,8 @@ public class ConfigLoader {
             DatabaseConfig databaseConfig;
             ServerConfig serverConfig;
             if (workingPath == null) {
-                databaseConfig = new DatabaseConfig();
+                throw new RuntimeException();
+                //databaseConfig = new DatabaseConfig();
             } else {
                 databaseConfig = new DatabaseConfig(workingPath);
             }
@@ -82,11 +83,10 @@ public class ConfigLoader {
                     .serverConfig(serverConfig)
                     .build();
         } catch (IOException e) {
-//            return DatabaseServerConfig.builder()
-//                    .dbConfig(new DatabaseConfig())
-//                    .serverConfig(new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT))
-//                    .build();
-            throw new IllegalArgumentException();
+            return DatabaseServerConfig.builder()
+                    .dbConfig(new DatabaseConfig())
+                    .serverConfig(new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT))
+                    .build();
         }
     }
 }
