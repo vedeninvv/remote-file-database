@@ -82,10 +82,11 @@ public class ConfigLoader {
                     .serverConfig(serverConfig)
                     .build();
         } catch (IOException e) {
-            return DatabaseServerConfig.builder()
-                    .dbConfig(new DatabaseConfig())
-                    .serverConfig(new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT))
-                    .build();
+//            return DatabaseServerConfig.builder()
+//                    .dbConfig(new DatabaseConfig())
+//                    .serverConfig(new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT))
+//                    .build();
+            throw new IllegalArgumentException();
         }
     }
 }
