@@ -1,6 +1,7 @@
 package com.itmo.java.basics.config;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -11,7 +12,7 @@ import java.util.Properties;
 public class ConfigLoader {
     private static final String DEFAULT_PROPERTY_FILE = "server.properties";
 
-    private final InputStream propertyInputStream;
+    private InputStream propertyInputStream;
 
     /**
      * По умолчанию читает из server.properties
@@ -24,7 +25,14 @@ public class ConfigLoader {
      * @param name Имя конфикурационного файла, откуда читать
      */
     public ConfigLoader(String name) {
-        this.propertyInputStream = getClass().getResourceAsStream(name);
+        this.propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
+        if (this.propertyInputStream == null){
+            try {
+                this.propertyInputStream = new FileInputStream(name);
+            } catch (FileNotFoundException e) {
+                this.propertyInputStream = null;
+            }
+        }
     }
 
     /**
@@ -37,6 +45,9 @@ public class ConfigLoader {
     public DatabaseServerConfig readConfig() {
         Properties properties = new Properties();
         try {
+            if (propertyInputStream == null){
+                throw new IOException("Config file not found");
+            }
             properties.load(propertyInputStream);
             String workingPath = properties.getProperty("kvs.workingPath");
             String host = properties.getProperty("kvs.host");
