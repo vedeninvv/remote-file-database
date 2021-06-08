@@ -2,12 +2,16 @@ package com.itmo.java.protocol;
 
 import com.itmo.java.protocol.model.*;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 
 public class RespReader implements AutoCloseable {
     private static final int READ_AHEAD_LIMIT = 3;
-    private final BufferedReader bufferedReader;
+    private final InputStreamReader reader;
 
     /**
      * Специальные символы окончания элемента
@@ -16,16 +20,16 @@ public class RespReader implements AutoCloseable {
     private static final byte LF = '\n';
 
     public RespReader(InputStream is) {
-        bufferedReader = new BufferedReader(new InputStreamReader(is));
+        reader = new InputStreamReader(is);
     }
 
     /**
      * Есть ли следующий массив в стриме?
      */
     public boolean hasArray() throws IOException {
-        bufferedReader.mark(READ_AHEAD_LIMIT);
-        byte code = (byte) bufferedReader.read();
-        bufferedReader.reset();
+        reader.mark(READ_AHEAD_LIMIT);
+        byte code = (byte) reader.read();
+        reader.reset();
         return code == RespArray.CODE;
     }
 
@@ -37,7 +41,7 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespObject readObject() throws IOException {
-        int codeInt = bufferedReader.read();
+        int codeInt = reader.read();
         if (codeInt == -1) {
             throw new EOFException("InputStream is empty when try to read RespObject");
         }
@@ -63,11 +67,7 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespError readError() throws IOException {
-        String message = bufferedReader.readLine();
-        if (message.isEmpty()) {
-            throw new EOFException("InputStream is empty when try to read Error");
-        }
-        return new RespError(message.getBytes(StandardCharsets.UTF_8));
+        return new RespError(readBytesToEndOfLine());
     }
 
     /**
@@ -77,19 +77,16 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespBulkString readBulkString() throws IOException {
-        String stringSizeStr = bufferedReader.readLine();
-        if (stringSizeStr.isEmpty()) {
-            throw new EOFException("InputStream is empty when try to read BulkString");
-        }
-        int stringSize = Integer.parseInt(stringSizeStr);
+        byte[] stringSizeBytes = readBytesToEndOfLine();
+        int stringSize = Integer.parseInt(new String(stringSizeBytes, StandardCharsets.UTF_8));
         if (stringSize == RespBulkString.NULL_STRING_SIZE) {
             return RespBulkString.NULL_STRING;
         }
-        String stringData = bufferedReader.readLine();
-        if (stringData.length() != stringSize) {
+        byte[] stringData = readBytesToEndOfLine();
+        if (stringData.length != stringSize) {
             throw new IOException("String length is not equal with StringBulk size");
         }
-        return new RespBulkString(stringData.getBytes(StandardCharsets.UTF_8));
+        return new RespBulkString(stringData);
     }
 
     /**
@@ -99,11 +96,8 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespArray readArray() throws IOException {
-        String arraySizeStr = bufferedReader.readLine();
-        if (arraySizeStr.isEmpty()) {
-            throw new EOFException("InputStream is empty when try to read Array");
-        }
-        int arraySize = Integer.parseInt(arraySizeStr);
+        byte[] arraySizeBytes = readBytesToEndOfLine();
+        int arraySize = Integer.parseInt(new String(arraySizeBytes, StandardCharsets.UTF_8));
         RespObject[] respObjectArray = new RespObject[arraySize];
         for (int i = 0; i < arraySize; i++) {
             respObjectArray[i] = readObject();
@@ -118,20 +112,39 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespCommandId readCommandId() throws IOException {
-        String idStr = bufferedReader.readLine();
-        if (idStr.isEmpty()) {
-            throw new EOFException("InputStream is empty when try to read CommandId");
+        byte[] idBytes = readBytesToEndOfLine();
+        if (idBytes.length != 4) {
+            throw new IOException("Command Id is not integer");
         }
-        return new RespCommandId(bytesToInt(idStr.getBytes(StandardCharsets.UTF_8)));
+        return new RespCommandId(bytesToInt(idBytes));
     }
 
 
     @Override
     public void close() throws IOException {
-        bufferedReader.close();
+        reader.close();
     }
 
     private static int bytesToInt(byte[] bytes) {
         return (bytes[0] << 24) | (bytes[1] << 16) | (bytes[2] << 8) | (bytes[3]);
+    }
+
+    private byte[] readBytesToEndOfLine() throws IOException {
+        ArrayList<Byte> message = new ArrayList<>();
+        while (true) {
+            int currentByte = reader.read();
+            if (currentByte == -1) {
+                throw new EOFException("Stream is empty when try to read all bytes before '\\r\\n'");
+            }
+            if (currentByte == '\r') {
+                break;
+            }
+            message.add((byte) currentByte);
+        }
+        byte[] bytes = new byte[message.size()];
+        for (int i = 0; i < message.size(); i++) {
+            bytes[i] = message.get(i);
+        }
+        return bytes;
     }
 }
