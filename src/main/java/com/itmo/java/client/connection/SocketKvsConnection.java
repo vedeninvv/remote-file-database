@@ -8,6 +8,7 @@ import com.itmo.java.protocol.model.RespObject;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * С помощью {@link RespWriter} и {@link RespReader} читает/пишет в сокет
@@ -38,6 +39,9 @@ public class SocketKvsConnection implements KvsConnection {
             return respReader.readObject();
         } catch (IOException e) {
             throw new ConnectionException("IOException when connect with " + host + " and port " + port, e);
+        }
+        catch (IllegalArgumentException e) {
+            throw new ConnectionException("port is incorrect", e);
         }
     }
 
