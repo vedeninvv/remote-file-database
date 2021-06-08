@@ -22,6 +22,7 @@ import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Класс, который предоставляет доступ к серверу через сокеты
@@ -64,8 +65,22 @@ public class JavaSocketServerConnector implements Closeable {
     @Override
     public void close() {
         System.out.println("Stopping socket connector");
-        connectionAcceptorExecutor.shutdownNow();
-        clientIOWorkers.shutdownNow();
+        connectionAcceptorExecutor.shutdown();
+        try {
+            if (!connectionAcceptorExecutor.awaitTermination(800, TimeUnit.MILLISECONDS)) {
+                connectionAcceptorExecutor.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            connectionAcceptorExecutor.shutdownNow();
+        }
+        clientIOWorkers.shutdown();
+        try {
+            if (!clientIOWorkers.awaitTermination(800, TimeUnit.MILLISECONDS)) {
+                clientIOWorkers.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            clientIOWorkers.shutdownNow();
+        }
         if (serverSocket != null) {
             try {
                 serverSocket.close();
