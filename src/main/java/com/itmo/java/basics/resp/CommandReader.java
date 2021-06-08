@@ -35,21 +35,29 @@ public class CommandReader implements AutoCloseable {
      * @throws IllegalArgumentException если нет имени команды и id
      */
     public DatabaseCommand readCommand() throws IOException {
-        RespObject respObject = reader.readObject();
-        RespArray respArray = (RespArray) respObject;
-        RespObject id = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex());
-        if (!(id instanceof RespCommandId)){
-            throw new IllegalArgumentException("Command does not have command id");
+        if (!hasNextCommand()){
+            throw new IOException("Next command does not exist");
         }
-        if (id.asString() == null || id.asString().isEmpty()){
-            throw new IllegalArgumentException("Command id does not exist");
-        }
-        RespObject commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex());
-        if (!(commandName instanceof RespBulkString)){
-            throw new IllegalArgumentException("Command does not have command name");
-        }
-        if (commandName.asString() == null || commandName.asString().isEmpty()){
-            throw new IllegalArgumentException("Command name does not exist");
+        RespObject commandName;
+        RespArray respArray;
+        try {
+            respArray = reader.readArray();
+            RespObject id = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex());
+            if (!(id instanceof RespCommandId)) {
+                throw new IllegalArgumentException("Command does not have command id");
+            }
+            if (id.asString() == null || id.asString().isEmpty()) {
+                throw new IllegalArgumentException("Command id does not exist");
+            }
+            commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex());
+            if (!(commandName instanceof RespBulkString)) {
+                throw new IllegalArgumentException("Command does not have command name");
+            }
+            if (commandName.asString() == null || commandName.asString().isEmpty()) {
+                throw new IllegalArgumentException("Command name does not exist");
+            }
+        } catch (NullPointerException e){
+            throw new RuntimeException();
         }
         return DatabaseCommands.valueOf(commandName.asString()).getCommand(env, respArray.getObjects());
     }
