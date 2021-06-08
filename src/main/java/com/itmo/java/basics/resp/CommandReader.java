@@ -36,6 +36,9 @@ public class CommandReader implements AutoCloseable {
      */
     public DatabaseCommand readCommand() throws IOException {
         RespArray respArray = reader.readArray();
+        if (respArray.getObjects().size() < DatabaseCommandArgPositions.DATABASE_NAME.getPositionIndex() + 1){
+            throw new IllegalArgumentException("RespArray does not have enough size to have id, name and one object");
+        }
         RespObject id = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex());
         if (!(id instanceof RespCommandId)){
             throw new IllegalArgumentException("Command does not have command id");
@@ -50,6 +53,7 @@ public class CommandReader implements AutoCloseable {
         if (commandName.asString() == null || commandName.asString().isEmpty()){
             throw new IllegalArgumentException("Command name does not exist");
         }
+
         return DatabaseCommands.valueOf(commandName.asString()).getCommand(env, respArray.getObjects());
     }
 
