@@ -75,6 +75,9 @@ public class JavaSocketServerConnector implements Closeable {
 
     public static void main(String[] args) throws Exception {
         DatabaseServerConfig config = new ConfigLoader().readConfig();
+        System.out.println(config.getDbConfig().getWorkingPath());
+        System.out.println(config.getServerConfig().getPort());
+        System.out.println(config.getServerConfig().getHost());
         DatabaseServer server = DatabaseServer.initialize(new ExecutionEnvironmentImpl(config.getDbConfig()),
                 new DatabaseServerInitializer(new DatabaseInitializer(new TableInitializer(new SegmentInitializer()))));
         JavaSocketServerConnector connector = new JavaSocketServerConnector(server, config.getServerConfig());

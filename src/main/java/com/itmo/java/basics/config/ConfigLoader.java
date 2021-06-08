@@ -19,6 +19,13 @@ public class ConfigLoader {
      */
     public ConfigLoader() {
         propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
+        if (this.propertyInputStream == null) {
+            try {
+                this.propertyInputStream = new FileInputStream(DEFAULT_PROPERTY_FILE);
+            } catch (FileNotFoundException e) {
+                this.propertyInputStream = null;
+            }
+        }
     }
 
     /**
@@ -70,7 +77,6 @@ public class ConfigLoader {
                     serverConfig = new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT);
                 }
             }
-
             return DatabaseServerConfig.builder()
                     .dbConfig(databaseConfig)
                     .serverConfig(serverConfig)
