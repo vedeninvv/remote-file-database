@@ -7,6 +7,8 @@ import com.itmo.java.basics.console.ExecutionEnvironment;
 import com.itmo.java.basics.console.impl.CreateDatabaseCommand;
 import com.itmo.java.protocol.RespReader;
 import com.itmo.java.protocol.model.RespArray;
+import com.itmo.java.protocol.model.RespBulkString;
+import com.itmo.java.protocol.model.RespCommandId;
 import com.itmo.java.protocol.model.RespObject;
 
 import java.io.IOException;
@@ -35,14 +37,21 @@ public class CommandReader implements AutoCloseable {
     public DatabaseCommand readCommand() throws IOException {
         RespObject respObject = reader.readObject();
         RespArray respArray = (RespArray) respObject;
-        if (respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex()).asString() == null){
+        RespObject id = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_ID.getPositionIndex());
+        if (!(id instanceof RespCommandId)){
+            throw new IllegalArgumentException("Command does not have command id");
+        }
+        if (id.asString() == null || id.asString().isEmpty()){
             throw new IllegalArgumentException("Command id does not exist");
         }
-        String commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex()).asString();
-        if (commandName == null){
+        RespObject commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex());
+        if (!(commandName instanceof RespBulkString)){
+            throw new IllegalArgumentException("Command does not have command name");
+        }
+        if (commandName.asString() == null || commandName.asString().isEmpty()){
             throw new IllegalArgumentException("Command name does not exist");
         }
-        return DatabaseCommands.valueOf(commandName).getCommand(env, respArray.getObjects());
+        return DatabaseCommands.valueOf(commandName.asString()).getCommand(env, respArray.getObjects());
     }
 
     @Override
