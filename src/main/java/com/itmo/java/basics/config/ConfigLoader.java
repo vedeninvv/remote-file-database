@@ -32,7 +32,7 @@ public class ConfigLoader {
      * @param name Имя конфикурационного файла, откуда читать
      */
     public ConfigLoader(String name) {
-        this.propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
+        this.propertyInputStream = getClass().getClassLoader().getResourceAsStream(name);
         if (this.propertyInputStream == null) {
             try {
                 this.propertyInputStream = new FileInputStream(name);
@@ -62,8 +62,7 @@ public class ConfigLoader {
             DatabaseConfig databaseConfig;
             ServerConfig serverConfig;
             if (workingPath == null) {
-                throw new RuntimeException();
-                //databaseConfig = new DatabaseConfig();
+                databaseConfig = new DatabaseConfig();
             } else {
                 databaseConfig = new DatabaseConfig(workingPath);
             }
