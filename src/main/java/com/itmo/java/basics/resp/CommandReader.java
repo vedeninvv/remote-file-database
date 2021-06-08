@@ -44,6 +44,9 @@ public class CommandReader implements AutoCloseable {
         } catch (IOException e){
             throw new RuntimeException("throw IOE");
         }
+        catch (NullPointerException e){
+            throw new RuntimeException(e.getMessage());
+        }
         if (respObject == null) {
             throw new RuntimeException("Null object");
         }
