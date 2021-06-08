@@ -11,7 +11,7 @@ public class DatabaseConfig {
     }
 
     public DatabaseConfig(){
-        this.workingPath = Paths.get(System.getProperty("user.dir"), DEFAULT_WORKING_PATH).toString();
+        this.workingPath = DEFAULT_WORKING_PATH;
     }
 
     public String getWorkingPath() {
