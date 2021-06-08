@@ -18,7 +18,7 @@ public class ConfigLoader {
      * По умолчанию читает из server.properties
      */
     public ConfigLoader() {
-       propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
+        propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
     }
 
     /**
@@ -26,7 +26,7 @@ public class ConfigLoader {
      */
     public ConfigLoader(String name) {
         this.propertyInputStream = getClass().getClassLoader().getResourceAsStream(DEFAULT_PROPERTY_FILE);
-        if (this.propertyInputStream == null){
+        if (this.propertyInputStream == null) {
             try {
                 this.propertyInputStream = new FileInputStream(name);
             } catch (FileNotFoundException e) {
@@ -45,24 +45,35 @@ public class ConfigLoader {
     public DatabaseServerConfig readConfig() {
         Properties properties = new Properties();
         try {
-            if (propertyInputStream == null){
+            if (propertyInputStream == null) {
                 throw new IOException("Config file not found");
             }
             properties.load(propertyInputStream);
             String workingPath = properties.getProperty("kvs.workingPath");
             String host = properties.getProperty("kvs.host");
-            int port;
-            if (workingPath == null || host == null){
-                throw new IOException("WorkingPath or host is null");
+            String portStr = properties.getProperty("kvs.port");
+            DatabaseConfig databaseConfig;
+            ServerConfig serverConfig;
+            if (workingPath == null) {
+                databaseConfig = new DatabaseConfig();
+            } else {
+                databaseConfig = new DatabaseConfig(workingPath);
             }
-            try {
-                port = Integer.parseInt(properties.getProperty("kvs.port"));
-            } catch (NumberFormatException e){
-                throw new IOException("Port is not an integer");
+            if (host == null || portStr == null){
+                serverConfig = new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT);
             }
+            else {
+                try {
+                    int port = Integer.parseInt(portStr);
+                    serverConfig = new ServerConfig(host, port);
+                } catch (NumberFormatException e) {
+                    serverConfig = new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT);
+                }
+            }
+
             return DatabaseServerConfig.builder()
-                    .dbConfig(new DatabaseConfig(workingPath))
-                    .serverConfig(new ServerConfig(host, port))
+                    .dbConfig(databaseConfig)
+                    .serverConfig(serverConfig)
                     .build();
         } catch (IOException e) {
             return DatabaseServerConfig.builder()
