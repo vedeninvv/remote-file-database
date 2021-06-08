@@ -8,7 +8,6 @@ import com.itmo.java.protocol.model.RespObject;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.net.UnknownHostException;
 
 /**
  * С помощью {@link RespWriter} и {@link RespReader} читает/пишет в сокет
@@ -30,16 +29,16 @@ public class SocketKvsConnection implements KvsConnection {
 
     /**
      * Отправляет с помощью сокета команду и получает результат.
+     *
      * @param commandId id команды (номер)
      * @param command   команда
      * @throws ConnectionException если сокет закрыт или если произошла другая ошибка соединения
      */
     @Override
     public synchronized RespObject send(int commandId, RespArray command) throws ConnectionException {
-        try {
-            RespWriter respWriter = new RespWriter(clientSocket.getOutputStream());
+        try (RespWriter respWriter = new RespWriter(clientSocket.getOutputStream());
+             RespReader respReader = new RespReader(clientSocket.getInputStream())) {
             respWriter.write(command);
-            RespReader respReader = new RespReader(clientSocket.getInputStream());
             return respReader.readObject();
         } catch (IOException e) {
             throw new ConnectionException("IOException when send " + command.asString() + " with " + host + " and port " + port + " ___IOMessage___: " + e.getMessage(), e);

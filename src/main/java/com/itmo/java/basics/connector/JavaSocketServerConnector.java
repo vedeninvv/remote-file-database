@@ -114,7 +114,7 @@ public class JavaSocketServerConnector implements Closeable {
         public void run() {
             try (CommandReader commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv());
                  RespWriter respWriter = new RespWriter(client.getOutputStream())) {
-                while (!client.isClosed()) {
+                while (commandReader.hasNextCommand()) {
                     CompletableFuture<DatabaseCommandResult> commandResult = server.executeNextCommand(commandReader.readCommand());
                     respWriter.write(commandResult.get().serialize());
                 }
