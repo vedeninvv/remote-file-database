@@ -66,16 +66,14 @@ public class ConfigLoader {
             } else {
                 databaseConfig = new DatabaseConfig(workingPath);
             }
-            if (host == null || portStr == null){
-                serverConfig = new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT);
+            if (host == null){
+                host = ServerConfig.DEFAULT_HOST;
             }
-            else {
-                try {
-                    int port = Integer.parseInt(portStr);
-                    serverConfig = new ServerConfig(host, port);
-                } catch (NumberFormatException e) {
-                    serverConfig = new ServerConfig(ServerConfig.DEFAULT_HOST, ServerConfig.DEFAULT_PORT);
-                }
+            try {
+                int port = Integer.parseInt(portStr);
+                serverConfig = new ServerConfig(host, port);
+            } catch (NumberFormatException e) {
+                serverConfig = new ServerConfig(host, ServerConfig.DEFAULT_PORT);
             }
             return DatabaseServerConfig.builder()
                     .dbConfig(databaseConfig)
