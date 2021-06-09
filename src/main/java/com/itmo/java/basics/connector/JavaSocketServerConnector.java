@@ -125,7 +125,7 @@ public class JavaSocketServerConnector implements Closeable {
                 }
             } catch (Exception e) {
                 close();
-                //throw new RuntimeException("When try to read, write or execute command", e);
+                throw new RuntimeException("When try to read, write or execute command", e);
             }
         }
 
@@ -134,6 +134,11 @@ public class JavaSocketServerConnector implements Closeable {
          */
         @Override
         public void close() {
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             try {
                 respWriter.close();
                 client.close();
