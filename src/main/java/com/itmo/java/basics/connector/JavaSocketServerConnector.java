@@ -123,6 +123,7 @@ public class JavaSocketServerConnector implements Closeable {
                     CompletableFuture<DatabaseCommandResult> commandResult = server.executeNextCommand(commandReader.readCommand());
                     respWriter.write(commandResult.get().serialize());
                 }
+                close();
             } catch (Exception e) {
                 close();
                 throw new RuntimeException("When try to read, write or execute command", e);
@@ -134,11 +135,6 @@ public class JavaSocketServerConnector implements Closeable {
          */
         @Override
         public void close() {
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
             try {
                 respWriter.close();
                 client.close();
