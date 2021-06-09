@@ -22,7 +22,6 @@ import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Класс, который предоставляет доступ к серверу через сокеты
@@ -65,22 +64,8 @@ public class JavaSocketServerConnector implements Closeable {
     @Override
     public void close() {
         System.out.println("Stopping socket connector");
-        connectionAcceptorExecutor.shutdown();
-        try {
-            if (!connectionAcceptorExecutor.awaitTermination(800, TimeUnit.MILLISECONDS)) {
-                connectionAcceptorExecutor.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            connectionAcceptorExecutor.shutdownNow();
-        }
-        clientIOWorkers.shutdown();
-        try {
-            if (!clientIOWorkers.awaitTermination(800, TimeUnit.MILLISECONDS)) {
-                clientIOWorkers.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            clientIOWorkers.shutdownNow();
-        }
+        connectionAcceptorExecutor.shutdownNow();
+        clientIOWorkers.shutdownNow();
         if (serverSocket != null) {
             try {
                 serverSocket.close();
@@ -108,7 +93,6 @@ public class JavaSocketServerConnector implements Closeable {
     static class ClientTask implements Runnable, Closeable {
         private final Socket client;
         private final DatabaseServer server;
-        private final CommandReader commandReader;
         private final RespWriter respWriter;
 
         /**
@@ -119,7 +103,6 @@ public class JavaSocketServerConnector implements Closeable {
             this.client = client;
             this.server = server;
             try {
-                this.commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv());
                 this.respWriter = new RespWriter(client.getOutputStream());
             } catch (IOException e){
                 throw new RuntimeException("IOException when open socket streams", e);
@@ -135,11 +118,12 @@ public class JavaSocketServerConnector implements Closeable {
          */
         @Override
         public void run() {
-            try {
+            try (CommandReader commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv())) {
                 while (commandReader.hasNextCommand()) {
                     CompletableFuture<DatabaseCommandResult> commandResult = server.executeNextCommand(commandReader.readCommand());
                     respWriter.write(commandResult.get().serialize());
                 }
+                Thread.sleep(100);
             } catch (Exception e) {
                 close();
                 throw new RuntimeException("When try to read, write or execute command", e);
@@ -152,6 +136,7 @@ public class JavaSocketServerConnector implements Closeable {
         @Override
         public void close() {
             try {
+                respWriter.close();
                 client.close();
             } catch (IOException e){
                 throw new RuntimeException("When try to close client connection", e);
