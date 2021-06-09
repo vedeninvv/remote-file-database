@@ -35,7 +35,11 @@ public class CommandReader implements AutoCloseable {
      * @throws IllegalArgumentException если нет имени команды и id
      */
     public DatabaseCommand readCommand() throws IOException {
-        RespArray respArray = reader.readArray();
+        RespObject respObject = reader.readObject();
+        if (!(respObject instanceof RespArray)){
+            throw new IllegalArgumentException("Command is not an array");
+        }
+        RespArray respArray = (RespArray) respObject;
         if (respArray.getObjects().size() < DatabaseCommandArgPositions.DATABASE_NAME.getPositionIndex() + 1){
             throw new IllegalArgumentException("RespArray does not have enough size to have id, name and one object");
         }
