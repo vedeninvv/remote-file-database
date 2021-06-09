@@ -24,9 +24,7 @@ public class RespReader implements AutoCloseable {
      * Есть ли следующий массив в стриме?
      */
     public boolean hasArray() throws IOException {
-        reader.mark(READ_AHEAD_LIMIT);
         byte code = (byte) reader.read();
-        reader.reset();
         return code == RespArray.CODE;
     }
 
