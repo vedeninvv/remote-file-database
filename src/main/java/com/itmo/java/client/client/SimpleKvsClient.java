@@ -62,7 +62,7 @@ public class SimpleKvsClient implements KvsClient {
             }
             return result.asString();
         } catch (ConnectionException e) {
-            throw new DatabaseExecutionException(String.format("DatabaseExecutionException when try to send '%s' with kvsConnection" + " Message:: " + e.getMessage() + " StackTrace:: " + Arrays.toString(e.getStackTrace()),
+            throw new DatabaseExecutionException(String.format("DatabaseExecutionException when try to send '%s' with kvsConnection",
                     command.serialize().asString()), e);
         }
     }

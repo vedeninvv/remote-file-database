@@ -43,17 +43,13 @@ public class CommandReader implements AutoCloseable {
         if (!(id instanceof RespCommandId)){
             throw new IllegalArgumentException("Command does not have command id");
         }
-        if (id.asString() == null || id.asString().isEmpty()){
-            throw new IllegalArgumentException("Command id does not exist");
-        }
         RespObject commandName = respArray.getObjects().get(DatabaseCommandArgPositions.COMMAND_NAME.getPositionIndex());
         if (!(commandName instanceof RespBulkString)){
             throw new IllegalArgumentException("Command does not have command name");
         }
-        if (commandName.asString() == null || commandName.asString().isEmpty()){
+        if (commandName.asString() == null){
             throw new IllegalArgumentException("Command name does not exist");
         }
-
         return DatabaseCommands.valueOf(commandName.asString()).getCommand(env, respArray.getObjects());
     }
 

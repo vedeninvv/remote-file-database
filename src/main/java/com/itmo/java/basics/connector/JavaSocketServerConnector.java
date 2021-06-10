@@ -78,9 +78,6 @@ public class JavaSocketServerConnector implements Closeable {
 
     public static void main(String[] args) throws Exception {
         DatabaseServerConfig config = new ConfigLoader().readConfig();
-        System.out.println(config.getDbConfig().getWorkingPath());
-        System.out.println(config.getServerConfig().getPort());
-        System.out.println(config.getServerConfig().getHost());
         DatabaseServer server = DatabaseServer.initialize(new ExecutionEnvironmentImpl(config.getDbConfig()),
                 new DatabaseServerInitializer(new DatabaseInitializer(new TableInitializer(new SegmentInitializer()))));
         JavaSocketServerConnector connector = new JavaSocketServerConnector(server, config.getServerConfig());
@@ -93,7 +90,6 @@ public class JavaSocketServerConnector implements Closeable {
     static class ClientTask implements Runnable, Closeable {
         private final Socket client;
         private final DatabaseServer server;
-        private final RespWriter respWriter;
 
         /**
          * @param client клиентский сокет
@@ -102,11 +98,6 @@ public class JavaSocketServerConnector implements Closeable {
         public ClientTask(Socket client, DatabaseServer server) {
             this.client = client;
             this.server = server;
-            try {
-                this.respWriter = new RespWriter(client.getOutputStream());
-            } catch (IOException e){
-                throw new RuntimeException("IOException when open socket streams", e);
-            }
         }
 
         /**
@@ -118,7 +109,8 @@ public class JavaSocketServerConnector implements Closeable {
          */
         @Override
         public void run() {
-            try (CommandReader commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv())) {
+            try (CommandReader commandReader = new CommandReader(new RespReader(client.getInputStream()), server.getEnv());
+            RespWriter respWriter = new RespWriter(client.getOutputStream())) {
                 while (commandReader.hasNextCommand()) {
                     CompletableFuture<DatabaseCommandResult> commandResult = server.executeNextCommand(commandReader.readCommand());
                     respWriter.write(commandResult.get().serialize());
@@ -136,10 +128,9 @@ public class JavaSocketServerConnector implements Closeable {
         @Override
         public void close() {
             try {
-                respWriter.close();
                 client.close();
             } catch (IOException e){
-                throw new RuntimeException("When try to close client connection", e);
+                throw new RuntimeException("IOException when try to close client connection", e);
             }
         }
     }
