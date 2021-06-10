@@ -72,7 +72,7 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespBulkString readBulkString() throws IOException {
-        byte[] stringSizeBytes = readBytesToEndOfLine();
+        byte[] stringSizeBytes = reader.readLine().getBytes(StandardCharsets.UTF_8);
         int stringSize = Integer.parseInt(new String(stringSizeBytes, StandardCharsets.UTF_8));
         if (stringSize == RespBulkString.NULL_STRING_SIZE) {
             return RespBulkString.NULL_STRING;
