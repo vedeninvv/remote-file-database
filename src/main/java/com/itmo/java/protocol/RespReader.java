@@ -5,9 +5,10 @@ import com.itmo.java.protocol.model.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 public class RespReader implements AutoCloseable {
-    private static final int READ_AHEAD_LIMIT = 3;
+    private static final int READ_AHEAD_LIMIT = 1;
     private final BufferedReader reader;
 
     /**
@@ -72,7 +73,7 @@ public class RespReader implements AutoCloseable {
      * @throws IOException  при ошибке чтения
      */
     public RespBulkString readBulkString() throws IOException {
-        byte[] stringSizeBytes = reader.readLine().getBytes(StandardCharsets.UTF_8);
+        byte[] stringSizeBytes = readBytesToEndOfLine();
         int stringSize = Integer.parseInt(new String(stringSizeBytes, StandardCharsets.UTF_8));
         if (stringSize == RespBulkString.NULL_STRING_SIZE) {
             return RespBulkString.NULL_STRING;
@@ -125,7 +126,7 @@ public class RespReader implements AutoCloseable {
     }
 
     private byte[] readBytesToEndOfLine() throws IOException {
-        ArrayList<Byte> message = new ArrayList<>();
+        List<Byte> readingBytes = new ArrayList<>();
         while (true) {
             int currentByte = reader.read();
             if (currentByte == -1) {
@@ -137,19 +138,19 @@ public class RespReader implements AutoCloseable {
                 if (nextByte == -1) {
                     throw new EOFException("Stream is empty when try to read all bytes before '\\r\\n'");
                 }
-                if (nextByte == LF){
+                if (nextByte == LF) {
                     reader.reset();
                     reader.read();
                     break;
-                }else {
+                } else {
                     reader.reset();
                 }
             }
-            message.add((byte) currentByte);
+            readingBytes.add((byte) currentByte);
         }
-        byte[] bytes = new byte[message.size()];
-        for (int i = 0; i < message.size(); i++) {
-            bytes[i] = message.get(i);
+        byte[] bytes = new byte[readingBytes.size()];
+        for (int i = 0; i < readingBytes.size(); i++) {
+            bytes[i] = readingBytes.get(i);
         }
         return bytes;
     }
