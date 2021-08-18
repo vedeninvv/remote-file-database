@@ -1,1 +1,1 @@
-itmo-java-basics-2021
+A key-value file database that works with the remote client
